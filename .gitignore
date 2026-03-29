@@ -1,45 +1,43 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
+# Flutter/Dart
+**/build/
+**/.dart_tool/
+**/.packages
+**/.pub-cache/
+**/.pub/
+**/pubspec.lock
 **/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
+**/ios/.generated/
+**/ios/Pods/
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.h
+**/ios/Runner/GeneratedPluginRegistrant.m
+**/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+**/android/local.properties
+**/android/GeneratedPluginRegistrant.java
+**/android/key.properties
+**/.idea/
+**/.vscode/
+**/*.iml
+**/*.ipr
+**/*.iws
+**/.metadata
 
-# Symbolication related
-app.*.symbols
+# PHP
+**/vendor/
+**/.env
+**/composer.lock
 
-# Obfuscation related
-app.*.map.json
+# Arduino
+**/libraries/
+**/build_arduino/
+**/*.bin
+**/*.elf
+**/*.hex
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# OS files
+.DS_Store
+Thumbs.db
+
+# Other
+analyze_output.txt
+sonar-project.properties (if you want to keep it local)

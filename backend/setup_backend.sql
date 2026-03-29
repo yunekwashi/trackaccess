@@ -1,4 +1,4 @@
--- Connect to your trackaccessdb in PHPMyAdmin and run this:
+-- Database initialization script for TrackAccess
 
 CREATE TABLE IF NOT EXISTS scans (
     id INT AUTO_INCREMENT PRIMARY KEY,

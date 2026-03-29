@@ -1,8 +1,8 @@
 <?php
 header('Content-Type: application/json');
 
-// get_latest.php
-// Returns the most recent RFID scan recorded in the database
+// get_all_scans.php
+// Returns all RFID scans recorded in the database, ordered by time
 
 $servername = getenv('DB_HOST') ?: "localhost";
 $username = getenv('DB_USER') ?: "root";
@@ -17,22 +17,20 @@ if ($conn->connect_error) {
     die(json_encode(["success" => false, "message" => "Connection failed"]));
 }
 
-// Fetch the most recent scan from the last 10 seconds to ensure it's "fresh"
-$sql = "SELECT uid FROM scans WHERE created_at >= NOW() - INTERVAL 10 SECOND ORDER BY created_at DESC LIMIT 1";
+$sql = "SELECT uid, created_at FROM scans ORDER BY created_at ASC";
 $result = $conn->query($sql);
 
+$scans = [];
 if ($result->num_rows > 0) {
-    $row = $result->fetch_assoc();
-    echo json_encode([
-        "success" => true,
-        "uid" => $row["uid"]
-    ]);
-} else {
-    echo json_encode([
-        "success" => false,
-        "message" => "No recent scans found"
-    ]);
+    while($row = $result->fetch_assoc()) {
+        $scans[] = $row;
+    }
 }
+
+echo json_encode([
+    "success" => true,
+    "scans" => $scans
+]);
 
 $conn->close();
 ?>

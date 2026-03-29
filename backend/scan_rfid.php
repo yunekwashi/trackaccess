@@ -4,10 +4,10 @@ header('Content-Type: application/json');
 // scan_rfid.php
 // Receives UID from ESP32 and saves it to the database
 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "trackaccessdb";
+$servername = getenv('DB_HOST') ?: "localhost";
+$username = getenv('DB_USER') ?: "root";
+$password = getenv('DB_PASS') ?: "";
+$dbname = getenv('DB_NAME') ?: "trackaccessdb";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);

@@ -1,0 +1,102 @@
+[2026-03-27 16:47:34] Login attempt: Array
+(
+    [username] => admin
+    [password] => 1234
+)
+
+[2026-03-27 16:48:32] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 00:35:51] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 00:40:25] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 00:43:03] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 00:46:58] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 01:57:21] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 03:17:24] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 03:19:41] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 03:43:34] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 03:43:49] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 04:11:16] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 04:12:44] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 04:16:08] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 04:28:32] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 05:23:44] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-28 05:28:12] Login attempt: Array
+(
+    [username] => admin
+    [password] => password123
+)
+

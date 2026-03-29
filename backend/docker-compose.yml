@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:latest
+    container_name: trackaccess_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./setup_backend.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/mysql
+
+  app:
+    build: .
+    container_name: trackaccess_app
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USER: root
+      DB_PASS: ${DB_ROOT_PASSWORD}
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: trackaccess_pma
+    restart: always
+    ports:
+      - "8001:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+      PMA_BLOWFISH_SECRET: trackaccess_secret_32_chars_long_!123
+
+volumes:
+  db_data:
