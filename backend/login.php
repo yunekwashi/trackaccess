@@ -1,27 +1,59 @@
 <?php
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 
-// login.php
-// Simple login script for admin authentication (hardcoded for now)
-
-// Debug logging
-$logFile = __DIR__ . '/debug.log';
-file_put_contents($logFile, date('[Y-m-d H:i:s] ') . "Login attempt: " . print_r($_POST, true) . "\n", FILE_APPEND);
-
-$data = $_POST;
-if (empty($data)) {
-    $raw = file_get_contents("php://input");
-    file_put_contents($logFile, date('[Y-m-d H:i:s] ') . "Raw input: " . $raw . "\n", FILE_APPEND);
-    $data = json_decode($raw, true) ?: [];
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
 }
 
-$username = isset($data['username']) ? trim($data['username']) : '';
-$password = isset($data['password']) ? trim($data['password']) : '';
+$logFile = __DIR__ . '/debug.log';
 
-// Hardcoded for testing - should be moved to DB in the future
-if ($username === 'admin' && $password === 'password123') {
-    echo json_encode(["success" => true, "message" => "Login successful"]);
+$servername = getenv('DB_HOST') ?: "db";
+$username = getenv('DB_USER') ?: "root";
+$password = getenv('DB_PASS') ?: "password123";
+$dbname = getenv('DB_NAME') ?: "trackaccessdb";
+
+file_put_contents($logFile, date('[Y-m-d H:i:s] ') . "Server: $servername, DB: $dbname, User: $username\n", FILE_APPEND);
+
+$raw = file_get_contents("php://input");
+$data = json_decode($raw, true);
+if (!$data) {
+    $data = $_POST;
+}
+
+if ($data && isset($data['username']) && isset($data['password'])) {
+    $input_username = trim($data['username']);
+    $input_password = trim($data['password']);
+
+    $conn = new mysqli($servername, $username, $password, $dbname);
+    if ($conn->connect_error) {
+        die(json_encode(["success" => false, "message" => "Database connection failed"]));
+    }
+
+    $stmt = $conn->prepare("SELECT * FROM tblusers WHERE usr_username = ? AND usr_password = ?");
+    $stmt->bind_param("ss", $input_username, $input_password);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        echo json_encode([
+            "success" => true, 
+            "message" => "Login successful", 
+            "user" => [
+                "id" => $user['usr_id'], 
+                "fullname" => $user['usr_fullname']
+            ]
+        ]);
+    } else {
+        echo json_encode(["success" => false, "message" => "Invalid username or password"]);
+    }
+    $stmt->close();
+    $conn->close();
 } else {
-    echo json_encode(["success" => false, "message" => "Invalid credentials"]);
+    echo json_encode(["success" => false, "message" => "Invalid request: missing username/password"]);
 }
 ?>

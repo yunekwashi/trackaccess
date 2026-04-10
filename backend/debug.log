@@ -100,3 +100,227 @@
     [password] => password123
 )
 
+[2026-03-30 08:38:08] Login attempt: {\
+[2026-03-30 08:38:54] Raw input: {\
+[2026-03-30 08:38:54] Parsed data: Array
+(
+)
+
+[2026-03-30 08:43:42] Raw input: username=admin&password=password123
+[2026-03-30 08:43:42] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 09:08:39] Raw input: {\
+[2026-03-30 09:08:39] Parsed data: Array
+(
+)
+
+[2026-03-30 09:08:46] Raw input: 
+[2026-03-30 09:08:46] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 09:10:26] Raw input: username=admin&password=passwor123
+[2026-03-30 09:10:26] Parsed data: Array
+(
+    [username] => admin
+    [password] => passwor123
+)
+
+[2026-03-30 09:10:27] Raw input: username=admin&password=passwor123
+[2026-03-30 09:10:27] Parsed data: Array
+(
+    [username] => admin
+    [password] => passwor123
+)
+
+[2026-03-30 09:10:33] Raw input: username=admin&password=password123
+[2026-03-30 09:10:33] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 09:29:55] Raw input: username=admin&password=password123
+[2026-03-30 09:29:55] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 09:37:29] Raw input: username=admin&password=password123
+[2026-03-30 09:37:29] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 15:48:48] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 15:48:48] Raw input: username=admin&password=password123
+[2026-03-30 15:48:49] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 15:58:16] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 15:58:16] Raw input: username=admin&password=password123
+[2026-03-30 15:58:16] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 15:59:08] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 15:59:08] Raw input: username=admin&password=password123
+[2026-03-30 15:59:08] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 15:59:09] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 15:59:09] Raw input: username=admin&password=password123
+[2026-03-30 15:59:09] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:07:40] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:07:40] Raw input: username=admin&password=password123
+[2026-03-30 16:07:40] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:17:59] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:17:59] Raw input: username=admin&password=password123
+[2026-03-30 16:17:59] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:18:01] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:18:01] Raw input: username=admin&password=password123
+[2026-03-30 16:18:01] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:18:02] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:18:02] Raw input: username=admin&password=password123
+[2026-03-30 16:18:02] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:18:02] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:18:02] Raw input: username=admin&password=password123
+[2026-03-30 16:18:02] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:18:03] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:18:03] Raw input: username=admin&password=password123
+[2026-03-30 16:18:03] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:18:04] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:18:04] Raw input: username=admin&password=password123
+[2026-03-30 16:18:04] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:19:03] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:19:03] Raw input: username=admin&password=password123
+[2026-03-30 16:19:03] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:24:03] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:24:03] Raw input: username=admin&password=password123
+[2026-03-30 16:24:03] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:24:04] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:24:04] Raw input: username=admin&password=password123
+[2026-03-30 16:24:05] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:24:05] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:24:05] Raw input: username=admin&password=password123
+[2026-03-30 16:24:05] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:35:40] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:35:40] Raw input: username=admin&password=password123
+[2026-03-30 16:35:40] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:36:25] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:36:25] Raw input: username=admin&password=password123
+[2026-03-30 16:36:25] Parsed data: Array
+(
+    [username] => admin
+    [password] => password123
+)
+
+[2026-03-30 16:42:58] Server: , DB: trackaccessdb, User: , Running via: apache2handler
+[2026-03-30 16:42:58] Raw input: password=password123&username=admin
+[2026-03-30 16:42:58] Parsed data: Array
+(
+    [password] => password123
+    [username] => admin
+)
+
+[2026-03-30 16:48:06] Server: db, DB: trackaccessdb, User: root
+[2026-03-30 16:49:58] Server: db, DB: trackaccessdb, User: root
+[2026-03-30 16:58:23] Server: db, DB: trackaccessdb, User: root
+[2026-03-31 01:00:06] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 10:57:51] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 11:02:47] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 11:06:17] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 11:08:17] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 11:13:04] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 11:15:35] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 11:30:06] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 12:12:48] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 12:30:32] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 12:35:31] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 12:53:42] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 12:59:28] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 15:16:27] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 15:25:06] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 15:28:33] Server: db, DB: trackaccessdb, User: root
+[2026-04-04 15:34:30] Server: db, DB: trackaccessdb, User: root

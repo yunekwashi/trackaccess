@@ -41,3 +41,7 @@ Thumbs.db
 # Other
 analyze_output.txt
 sonar-project.properties (if you want to keep it local)
+Output/
+temp_check/
+temp_verify/
+.flutter-plugins-dependencies
