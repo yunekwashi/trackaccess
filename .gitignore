@@ -40,8 +40,15 @@ Thumbs.db
 
 # Other
 analyze_output.txt
-sonar-project.properties (if you want to keep it local)
+sonar-project.properties
+.flutter-plugins-dependencies
+
+# Build Artifacts and Executables
 Output/
+TrackAccess_Fixed/
 temp_check/
 temp_verify/
-.flutter-plugins-dependencies
+*.exe
+*.dll
+*.zip
+*.iss
