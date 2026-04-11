@@ -17,19 +17,20 @@ if ($conn->connect_error) {
     die(json_encode(["success" => false, "message" => "Connection failed"]));
 }
 
-$sql = "SELECT uid, created_at FROM scans ORDER BY created_at ASC";
+$sql = "SELECT id, student_id, student_name, action, details, timestamp FROM activity_logs ORDER BY timestamp DESC";
 $result = $conn->query($sql);
 
-$scans = [];
-if ($result->num_rows > 0) {
+$logs = [];
+if ($result && $result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
-        $scans[] = $row;
+        $logs[] = $row;
     }
 }
 
 echo json_encode([
     "success" => true,
-    "scans" => $scans
+    "count" => count($logs),
+    "logs" => $logs
 ]);
 
 $conn->close();
