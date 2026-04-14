@@ -42,8 +42,10 @@ if (!$conn->connect_error) {
         }
         
         // Fetch Stats - Total Logs
-        $res = $conn->query("SELECT COUNT(*) as count FROM activity_logs");
-        if ($res && $res->num_rows > 0) $stats['total_logs'] = $res->fetch_assoc()['count'];
+        $res = $conn->query("SELECT COUNT(*) as count FROM activity_logs WHERE DATE(timestamp) = CURDATE()");
+        if ($res && $res->num_rows > 0) {
+        $stats['logs_today'] = $res->fetch_assoc()['count'];
+        }
         
         // Fetch Stats - Logs Today
         $res = $conn->query("SELECT COUNT(*) as count FROM activity_logs WHERE DATE(timestamp) = CURDATE()");
