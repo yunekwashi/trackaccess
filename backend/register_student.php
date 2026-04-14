@@ -1,6 +1,15 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+$allowed_origins = [
+    'http://localhost:8000',
+    'http://your-production-domain.com'
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowed_origins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+} else {
+    header('Access-Control-Allow-Origin: ');
+}
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
@@ -9,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-$logFile = '/var/www/html/debug.log';
 $servername = getenv('DB_HOST') ?: "db";
 $username = getenv('DB_USER') ?: "root";
 $password = getenv('DB_PASS') ?: "password123";
@@ -60,4 +68,3 @@ if ($data && isset($data['student_id']) && isset($data['name']) && isset($data['
 } else {
     echo json_encode(["success" => false, "message" => "Invalid data: Missing required fields"]);
 }
-?>
