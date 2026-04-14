@@ -26,7 +26,7 @@ if ($data && isset($data["uid"])) {
     // Save the scan with a timestamp
     $sql = "INSERT INTO scans (uid, created_at) VALUES ('$uid', NOW())";
     
-    if ($conn->query($sql) === TRUE) {
+    if ($conn->query($sql) === true) {
         echo json_encode(["success" => true, "message" => "Scan recorded successfully"]);
     } else {
         echo json_encode(["success" => false, "message" => "Error recording scan: " . $conn->error]);
@@ -36,4 +36,3 @@ if ($data && isset($data["uid"])) {
 }
 
 $conn->close();
-?>
