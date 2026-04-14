@@ -48,7 +48,7 @@ if ($data && isset($data["student_id"]) && isset($data["student_name"]) && isset
     $action = $conn->real_escape_string($data["action"]);
     $details = $conn->real_escape_string($data["details"]);
     
-    $sql = "INSERT INTO activity_logs (student_id, student_name, action, details, timestamp) 
+  $sql = "INSERT INTO activity_logs (student_id, student_name, action, details, timestamp)
             VALUES ('$student_id', '$student_name', '$action', '$details', NOW())";
     if ($conn->query($sql) === true) {
         echo json_encode(["success" => true, "message" => "Activity logged successfully"]);
