@@ -146,12 +146,14 @@ LRESULT CALLBACK Win32Window::WndProc(HWND const window,
   if (message == WM_NCCREATE) {
     auto* window_struct = static_cast<CREATESTRUCT*>(
         static_cast<void*>(lparam));
+    // Fix L151: pointer -> uintptr_t -> LONG_PTR, all via static_cast
+    auto* create_params = static_cast<Win32Window*>(window_struct->lpCreateParams);
     SetWindowLongPtr(window, GWLP_USERDATA,
                      static_cast<LONG_PTR>(
-                         reinterpret_cast<uintptr_t>(window_struct->lpCreateParams)));
-    auto* that = static_cast<Win32Window*>(window_struct->lpCreateParams);
+                         static_cast<std::uintptr_t>(
+                             reinterpret_cast<std::uintptr_t>(create_params))));
     EnableFullDpiSupportIfAvailable(window);
-    that->window_handle_ = window;
+    create_params->window_handle_ = window;
   } else if (Win32Window* that = GetThisFromHandle(window)) {
     return that->MessageHandler(window, message, wparam, lparam);
   }
@@ -219,8 +221,9 @@ void Win32Window::Destroy() {
 }
 
 Win32Window* Win32Window::GetThisFromHandle(HWND const window) noexcept {
-  LONG_PTR user_data = GetWindowLongPtr(window, GWLP_USERDATA);
-  void* ptr = reinterpret_cast<void*>(user_data);
+  // Fix L223: use auto for redundant type, reinterpret_cast only ptr->ptr
+  auto user_data = GetWindowLongPtr(window, GWLP_USERDATA);
+  void* ptr = static_cast<void*>(reinterpret_cast<Win32Window*>(user_data));
   return static_cast<Win32Window*>(ptr);
 }
 
