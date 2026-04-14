@@ -1,6 +1,15 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+$allowed_origins = [
+    'http://localhost:8000',
+    'http://your-production-domain.com'
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowed_origins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+} else {
+    header('Access-Control-Allow-Origin: ');
+}
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
@@ -15,8 +24,6 @@ $servername = getenv('DB_HOST') ?: "db";
 $username = getenv('DB_USER') ?: "root";
 $password = getenv('DB_PASS') ?: "password123";
 $dbname = getenv('DB_NAME') ?: "trackaccessdb";
-
-file_put_contents($logFile, date('[Y-m-d H:i:s] ') . "Server: $servername, DB: $dbname, User: $username\n", FILE_APPEND);
 
 $raw = file_get_contents("php://input");
 $data = json_decode($raw, true);
@@ -56,4 +63,3 @@ if ($data && isset($data['username']) && isset($data['password'])) {
 } else {
     echo json_encode(["success" => false, "message" => "Invalid request: missing username/password"]);
 }
-?>
