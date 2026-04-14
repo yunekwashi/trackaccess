@@ -31,12 +31,14 @@ android {
     }
 
     buildTypes {
-        release {
-            // CAUTION: Using debug signing for release builds is insecure.
-            // In a production environment, you should use a proper signing configuration.
-            // For more details, see: https://flutter.dev/docs/deployment/android#signing-the-app
+            release {
             signingConfig = signingConfigs.getByName("debug")
-        }
+            isMinifyEnabled = true
+            proguardFiles(
+            getDefaultProguardFile("proguard-android-optimize.txt"),
+            "proguard-rules.pro"
+    )
+}
     }
 }
 
