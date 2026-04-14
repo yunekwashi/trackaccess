@@ -75,7 +75,7 @@ const wchar_t* WindowClassRegistrar::GetWindowClass() {
     window_class.hInstance = GetModuleHandle(nullptr);
     window_class.hIcon =
         LoadIcon(window_class.hInstance, MAKEINTRESOURCE(IDI_APP_ICON));
-    window_class.hbrBackground = nullptr;  // Fix: 0 -> nullptr
+    window_class.hbrBackground = nullptr;
     window_class.lpszMenuName = nullptr;
     window_class.lpfnWndProc = Win32Window::WndProc;
     RegisterClass(&window_class);
@@ -207,7 +207,7 @@ Win32Window::MessageHandler(HWND hwnd,
 }
 
 void Win32Window::Destroy() {
-  Win32Window::OnDestroy();  // Fix: explicit scope to avoid ambiguous virtual dispatch
+  Win32Window::OnDestroy();
 
   if (window_handle_) {
     DestroyWindow(window_handle_);
@@ -219,9 +219,9 @@ void Win32Window::Destroy() {
 }
 
 Win32Window* Win32Window::GetThisFromHandle(HWND const window) noexcept {
-  return static_cast<Win32Window*>(
-      static_cast<void*>(
-          reinterpret_cast<uintptr_t*>(GetWindowLongPtr(window, GWLP_USERDATA))));
+  LONG_PTR user_data = GetWindowLongPtr(window, GWLP_USERDATA);
+  void* ptr = reinterpret_cast<void*>(user_data);
+  return static_cast<Win32Window*>(ptr);
 }
 
 void Win32Window::SetChildContent(HWND content) {
