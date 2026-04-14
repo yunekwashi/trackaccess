@@ -17,8 +17,6 @@ constexpr const wchar_t kGetPreferredBrightnessRegKey[] =
   L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
 constexpr const wchar_t kGetPreferredBrightnessRegValue[] = L"AppsUseLightTheme";
 
-static int g_active_window_count = 0;
-
 using EnableNonClientDpiScaling = BOOL __stdcall(HWND hwnd);
 
 int Scale(int source, double scale_factor) {
@@ -90,12 +88,19 @@ void WindowClassRegistrar::UnregisterWindowClass() {
   class_registered_ = false;
 }
 
+namespace {
+  int& GetActiveWindowCount() {
+    static int count = 0;
+    return count;
+  }
+}
+
 Win32Window::Win32Window() {
-  ++g_active_window_count;
+  ++GetActiveWindowCount();
 }
 
 Win32Window::~Win32Window() {
-  --g_active_window_count;
+  --GetActiveWindowCount();
   Destroy();
 }
 
@@ -206,7 +211,7 @@ void Win32Window::Destroy() {
     DestroyWindow(window_handle_);
     window_handle_ = nullptr;
   }
-  if (g_active_window_count == 0) {
+  if (GetActiveWindowCount() == 0) {
     WindowClassRegistrar::GetInstance()->UnregisterWindowClass();
   }
 }
