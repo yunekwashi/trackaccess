@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 $allowed_origins = [
     'http://localhost:8000',
-    'http://your-production-domain.com'
+    'https://your-production-domain.com'
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
