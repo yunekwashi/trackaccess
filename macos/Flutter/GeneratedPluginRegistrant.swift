@@ -10,7 +10,7 @@ import flutter_libserialport
 import path_provider_foundation
 import sqlite3_flutter_libs
 
-func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+func registerGeneratedPlugins(registry: FlutterPluginRegistry) {
   FilePickerPlugin.register(with: registry.registrar(forPlugin: "FilePickerPlugin"))
   FlutterLibserialportPlugin.register(with: registry.registrar(forPlugin: "FlutterLibserialportPlugin"))
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
