@@ -2,7 +2,6 @@
 #define RUNNER_WIN32_WINDOW_H_
 
 #include <windows.h>
-
 #include <functional>
 #include <memory>
 #include <string>
