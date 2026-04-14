@@ -1,8 +1,6 @@
 import Flutter
 import UIKit
 
-/// SceneDelegate intentionally contains no custom logic.
+/// SceneDelegate is a direct alias for FlutterSceneDelegate.
 /// All scene lifecycle handling is provided by FlutterSceneDelegate.
-class SceneDelegate: FlutterSceneDelegate {
-  // No additional implementation needed.
-}
+typealias SceneDelegate = FlutterSceneDelegate
