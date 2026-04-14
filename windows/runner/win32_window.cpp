@@ -8,7 +8,8 @@
 namespace {
 
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
-constexpr DWORD DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+constexpr DWORD kDwmwaUseImmersiveDarkMode = 20;
+#define DWMWA_USE_IMMERSIVE_DARK_MODE kDwmwaUseImmersiveDarkMode
 #endif
 
 constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
@@ -28,10 +29,10 @@ void EnableFullDpiSupportIfAvailable(HWND hwnd) {
   if (!user32_module) {
     return;
   }
-  auto enable_non_client_dpi_scaling =
+  if (auto enable_non_client_dpi_scaling =
       reinterpret_cast<EnableNonClientDpiScaling*>(
           GetProcAddress(user32_module, "EnableNonClientDpiScaling"));
-  if (enable_non_client_dpi_scaling != nullptr) {
+      enable_non_client_dpi_scaling != nullptr) {
     enable_non_client_dpi_scaling(hwnd);
   }
   FreeLibrary(user32_module);
@@ -143,11 +144,11 @@ LRESULT CALLBACK Win32Window::WndProc(HWND const window,
                                       WPARAM const wparam,
                                       LPARAM const lparam) noexcept {
   if (message == WM_NCCREATE) {
-    auto window_struct = reinterpret_cast<CREATESTRUCT*>(lparam);
+    auto* window_struct = static_cast<CREATESTRUCT*>(
+        reinterpret_cast<void*>(lparam));
     SetWindowLongPtr(window, GWLP_USERDATA,
                      reinterpret_cast<LONG_PTR>(window_struct->lpCreateParams));
-
-    auto that = static_cast<Win32Window*>(window_struct->lpCreateParams);
+    auto* that = static_cast<Win32Window*>(window_struct->lpCreateParams);
     EnableFullDpiSupportIfAvailable(window);
     that->window_handle_ = window;
   } else if (Win32Window* that = GetThisFromHandle(window)) {
@@ -172,7 +173,7 @@ Win32Window::MessageHandler(HWND hwnd,
       return 0;
 
     case WM_DPICHANGED: {
-      auto newRectSize = reinterpret_cast<RECT*>(lparam);
+      auto* newRectSize = static_cast<RECT*>(reinterpret_cast<void*>(lparam));
       LONG newWidth = newRectSize->right - newRectSize->left;
       LONG newHeight = newRectSize->bottom - newRectSize->top;
 
@@ -217,8 +218,8 @@ void Win32Window::Destroy() {
 }
 
 Win32Window* Win32Window::GetThisFromHandle(HWND const window) noexcept {
-  return reinterpret_cast<Win32Window*>(
-      GetWindowLongPtr(window, GWLP_USERDATA));
+  return static_cast<Win32Window*>(
+      reinterpret_cast<void*>(GetWindowLongPtr(window, GWLP_USERDATA)));
 }
 
 void Win32Window::SetChildContent(HWND content) {
