@@ -1,6 +1,15 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+$allowed_origins = [
+    'http://localhost:8000',
+    'http://your-production-domain.com'
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowed_origins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+} else {
+    header('Access-Control-Allow-Origin: ');
+}
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
@@ -41,8 +50,7 @@ if ($data && isset($data["student_id"]) && isset($data["student_name"]) && isset
     
     $sql = "INSERT INTO activity_logs (student_id, student_name, action, details, timestamp) 
             VALUES ('$student_id', '$student_name', '$action', '$details', NOW())";
-            
-    if ($conn->query($sql) === TRUE) {
+    if ($conn->query($sql) === true) {
         echo json_encode(["success" => true, "message" => "Activity logged successfully"]);
     } else {
         echo json_encode(["success" => false, "message" => "Error: " . $conn->error]);
@@ -52,4 +60,3 @@ if ($data && isset($data["student_id"]) && isset($data["student_name"]) && isset
 }
 
 $conn->close();
-?>
