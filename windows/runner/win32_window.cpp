@@ -222,7 +222,9 @@ void Win32Window::Destroy() {
 
 Win32Window* Win32Window::GetThisFromHandle(HWND const window) noexcept {
   auto user_data = GetWindowLongPtr(window, GWLP_USERDATA);
-  return static_cast<Win32Window*>(reinterpret_cast<void*>(user_data));
+  return static_cast<Win32Window*>(
+    static_cast<void*>(
+        reinterpret_cast<Win32Window*>(static_cast<std::uintptr_t>(user_data))));
 }
 
 void Win32Window::SetChildContent(HWND content) {
