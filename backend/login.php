@@ -48,10 +48,10 @@ if ($data && isset($data['username']) && isset($data['password'])) {
     if ($result->num_rows > 0) {
         $user = $result->fetch_assoc();
         echo json_encode([
-            "success" => true, 
-            "message" => "Login successful", 
+            "success" => true,
+            "message" => "Login successful",
             "user" => [
-                "id" => $user['usr_id'], 
+                "id" => $user['usr_id'],
                 "fullname" => $user['usr_fullname']
             ]
         ]);
