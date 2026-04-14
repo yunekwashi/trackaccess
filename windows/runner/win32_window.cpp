@@ -30,8 +30,8 @@ void EnableFullDpiSupportIfAvailable(HWND hwnd) {
     return;
   }
   if (auto enable_non_client_dpi_scaling =
-      reinterpret_cast<EnableNonClientDpiScaling*>(
-          GetProcAddress(user32_module, "EnableNonClientDpiScaling"));
+      static_cast<EnableNonClientDpiScaling*>(
+          static_cast<void*>(GetProcAddress(user32_module, "EnableNonClientDpiScaling")));
       enable_non_client_dpi_scaling != nullptr) {
     enable_non_client_dpi_scaling(hwnd);
   }
@@ -145,9 +145,10 @@ LRESULT CALLBACK Win32Window::WndProc(HWND const window,
                                       LPARAM const lparam) noexcept {
   if (message == WM_NCCREATE) {
     auto* window_struct = static_cast<CREATESTRUCT*>(
-        reinterpret_cast<void*>(lparam));
+        static_cast<void*>(lparam));
     SetWindowLongPtr(window, GWLP_USERDATA,
-                     reinterpret_cast<LONG_PTR>(window_struct->lpCreateParams));
+                     static_cast<LONG_PTR>(
+                         reinterpret_cast<uintptr_t>(window_struct->lpCreateParams)));
     auto* that = static_cast<Win32Window*>(window_struct->lpCreateParams);
     EnableFullDpiSupportIfAvailable(window);
     that->window_handle_ = window;
@@ -173,7 +174,7 @@ Win32Window::MessageHandler(HWND hwnd,
       return 0;
 
     case WM_DPICHANGED: {
-      auto* newRectSize = static_cast<RECT*>(reinterpret_cast<void*>(lparam));
+      auto* newRectSize = static_cast<RECT*>(static_cast<void*>(lparam));
       LONG newWidth = newRectSize->right - newRectSize->left;
       LONG newHeight = newRectSize->bottom - newRectSize->top;
 
@@ -219,7 +220,8 @@ void Win32Window::Destroy() {
 
 Win32Window* Win32Window::GetThisFromHandle(HWND const window) noexcept {
   return static_cast<Win32Window*>(
-      reinterpret_cast<void*>(GetWindowLongPtr(window, GWLP_USERDATA)));
+      static_cast<void*>(
+          reinterpret_cast<uintptr_t*>(GetWindowLongPtr(window, GWLP_USERDATA))));
 }
 
 void Win32Window::SetChildContent(HWND content) {
