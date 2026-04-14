@@ -37,7 +37,9 @@ if (!$conn->connect_error) {
 
         // Fetch Stats - Students
         $res = $conn->query("SELECT COUNT(*) as count FROM students");
-        if ($res && $res->num_rows > 0) $stats['students'] = $res->fetch_assoc()['count'];
+        if ($res && $res->num_rows > 0) {
+        $stats['students'] = $res->fetch_assoc()['count'];
+        }
         
         // Fetch Stats - Total Logs
         $res = $conn->query("SELECT COUNT(*) as count FROM activity_logs");
