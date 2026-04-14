@@ -37,12 +37,12 @@ if ($data && isset($data["student_id"])) {
     }
 
     $updates = [];
-    if ($name !== null) $updates[] = "name = '$name'";
-    if ($course !== null) $updates[] = "course = '$course'";
-    if ($year_level !== null) $updates[] = "year_level = '$year_level'";
-    if ($uid !== null) $updates[] = "rfid_uid = '$uid'";
-    if ($is_active !== null) $updates[] = "is_active = " . ($is_active ? "1" : "0");
-    if ($points !== null) $updates[] = "points = $points";
+    if ($name !== null) { $updates[] = "name = '$name'"; }
+    if ($course !== null) { $updates[] = "course = '$course'"; }
+    if ($year_level !== null) { $updates[] = "year_level = '$year_level'"; }
+    if ($uid !== null) { $updates[] = "rfid_uid = '$uid'"; }
+    if ($is_active !== null) { $updates[] = "is_active = " . ($is_active ? "1" : "0"); }
+    if ($points !== null) { $updates[] = "points = $points"; }
 
     if (empty($updates)) {
         die(json_encode(["success" => false, "message" => "No fields to update"]));
