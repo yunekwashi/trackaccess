@@ -38,18 +38,19 @@ if (!$conn->connect_error) {
         // Fetch Stats - Students
         $res = $conn->query("SELECT COUNT(*) as count FROM students");
         if ($res && $res->num_rows > 0) {
-        $stats['students'] = $res->fetch_assoc()['count'];
+            $stats['students'] = $res->fetch_assoc()['count'];
         }
-        
+
         // Fetch Stats - Total Logs
-        $res = $conn->query("SELECT COUNT(*) as count FROM activity_logs WHERE DATE(timestamp) = CURDATE()");
+        $res = $conn->query("SELECT COUNT(*) as count FROM activity_logs");
         if ($res && $res->num_rows > 0) {
-        $stats['logs_today'] = $res->fetch_assoc()['count'];
+            $stats['total_logs'] = $res->fetch_assoc()['count'];
         }
-        
+
         // Fetch Stats - Logs Today
         $res = $conn->query("SELECT COUNT(*) as count FROM activity_logs WHERE DATE(timestamp) = CURDATE()");
-        if ($res && $res->num_rows > 0) $stats['logs_today'] = $res->fetch_assoc()['count'];
+        if ($res && $res->num_rows > 0) {
+            $stats['logs_today'] = $res->fetch_assoc()['count'];
         
         // Fetch Recent Logs
         $res = $conn->query("SELECT * FROM activity_logs ORDER BY timestamp DESC LIMIT 10");
