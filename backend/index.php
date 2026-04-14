@@ -70,7 +70,9 @@ if (!$conn->connect_error) {
     <title>TrackAccess Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+      crossorigin="anonymous">
     <style>
         :root {
             --primary: #6366f1;
@@ -88,7 +90,7 @@ if (!$conn->connect_error) {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         }
 
         body {
@@ -118,7 +120,7 @@ if (!$conn->connect_error) {
         }
 
         .logo-section h1 {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
             font-size: 2rem;
             font-weight: 700;
             background: linear-gradient(135deg, #fff 0%, #818cf8 100%);
