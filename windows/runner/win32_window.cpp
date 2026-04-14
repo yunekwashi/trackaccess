@@ -223,7 +223,7 @@ void Win32Window::Destroy() {
 Win32Window* Win32Window::GetThisFromHandle(HWND const window) noexcept {
   // Fix L223: use auto for redundant type, reinterpret_cast only ptr->ptr
   auto user_data = GetWindowLongPtr(window, GWLP_USERDATA);
-  void* ptr = static_cast<void*>(reinterpret_cast<Win32Window*>(user_data));
+  auto* ptr = static_cast<void*>(reinterpret_cast<Win32Window*>(user_data));
   return static_cast<Win32Window*>(ptr);
 }
 
