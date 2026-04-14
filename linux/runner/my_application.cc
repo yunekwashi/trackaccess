@@ -133,7 +133,10 @@ static void my_application_class_init(MyApplicationClass* klass) {
   G_OBJECT_CLASS(klass)->dispose = my_application_dispose;
 }
 
-static void my_application_init(MyApplication* self) {}
+static void my_application_init(MyApplication* self) {
+  /* No initialization required for this application instance.
+   * All setup is handled in my_application_activate(). */
+}
 
 MyApplication* my_application_new() {
   // Set the program name to the application ID, which helps various systems
