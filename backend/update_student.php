@@ -1,63 +1,81 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+
+$allowed_origins = [
+    'http://localhost:8000',
+    'http://your-production-domain.com'
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowed_origins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+} else {
+    header('Access-Control-Allow-Origin: ');
+}
+
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Database connection parameters
 $servername = getenv('DB_HOST') ?: "localhost";
-$username = getenv('DB_USER') ?: "root";
-$password = getenv('DB_PASS') ?: "";
-$dbname = getenv('DB_NAME') ?: "trackaccessdb";
+$username   = getenv('DB_USER') ?: "root";
+$password   = getenv('DB_PASS') ?: "";
+$dbname     = getenv('DB_NAME') ?: "trackaccessdb";
 
-// Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Get the POST data
-$raw = file_get_contents("php://input");
+$raw  = file_get_contents("php://input");
 $data = json_decode($raw, true);
 
-if ($data && isset($data["student_id"])) {
-    $student_id = $data["student_id"];
-    $name = isset($data["name"]) ? $data["name"] : null;
-    $course = isset($data["course"]) ? $data["course"] : null;
-    $year_level = isset($data["year_level"]) ? $data["year_level"] : null;
-    $uid = isset($data["uid"]) ? $data["uid"] : null;
-    $is_active = isset($data["isActive"]) ? $data["isActive"] : null;
-    $points = isset($data["points"]) ? $data["points"] : null;
-
-    // Connect to the DB
-    $conn = new mysqli($servername, $username, $password, $dbname);
-
-    if ($conn->connect_error) {
-        die(json_encode(["success" => false, "message" => "Connection failed"]));
-    }
-
-    $updates = [];
-    if ($name !== null) { $updates[] = "name = '$name'"; }
-    if ($course !== null) { $updates[] = "course = '$course'"; }
-    if ($year_level !== null) { $updates[] = "year_level = '$year_level'"; }
-    if ($uid !== null) { $updates[] = "rfid_uid = '$uid'"; }
-    if ($is_active !== null) { $updates[] = "is_active = " . ($is_active ? "1" : "0"); }
-    if ($points !== null) { $updates[] = "points = $points"; }
-
-    if (empty($updates)) {
-        die(json_encode(["success" => false, "message" => "No fields to update"]));
-    }
-
-    $sql = "UPDATE students SET " . implode(", ", $updates) . " WHERE student_id = '$student_id'";
-
-    if ($conn->query($sql) === TRUE) {
-        echo json_encode(["success" => true, "message" => "Student updated successfully"]);
-    } else {
-        echo json_encode(["success" => false, "message" => "Error updating student: " . $conn->error]);
-    }
-
-    $conn->close();
-} else {
+if (!$data || !isset($data["student_id"])) {
     echo json_encode(["success" => false, "message" => "Invalid data parameters"]);
+    exit;
 }
-?>
+
+$student_id = $data["student_id"];
+$name       = $data["name"]       ?? null;
+$course     = $data["course"]     ?? null;
+$year_level = $data["year_level"] ?? null;
+$uid        = $data["uid"]        ?? null;
+$is_active  = $data["isActive"]   ?? null;
+$points     = $data["points"]     ?? null;
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    echo json_encode(["success" => false, "message" => "Connection failed"]);
+    exit;
+}
+
+$setClauses = [];
+$bindTypes  = "";
+$bindValues = [];
+
+if ($name !== null)       { $setClauses[] = "name = ?";       $bindTypes .= "s"; $bindValues[] = $name; }
+if ($course !== null)     { $setClauses[] = "course = ?";     $bindTypes .= "s"; $bindValues[] = $course; }
+if ($year_level !== null) { $setClauses[] = "year_level = ?"; $bindTypes .= "s"; $bindValues[] = $year_level; }
+if ($uid !== null)        { $setClauses[] = "rfid_uid = ?";   $bindTypes .= "s"; $bindValues[] = $uid; }
+if ($is_active !== null)  { $setClauses[] = "is_active = ?";  $bindTypes .= "i"; $bindValues[] = $is_active ? 1 : 0; }
+if ($points !== null)     { $setClauses[] = "points = ?";     $bindTypes .= "i"; $bindValues[] = $points; }
+
+if (empty($setClauses)) {
+    echo json_encode(["success" => false, "message" => "No fields to update"]);
+    $conn->close();
+    exit;
+}
+
+$bindTypes  .= "s";
+$bindValues[] = $student_id;
+
+$sql  = "UPDATE students SET " . implode(", ", $setClauses) . " WHERE student_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($bindTypes, ...$bindValues);
+
+if ($stmt->execute()) {
+    echo json_encode(["success" => true, "message" => "Student updated successfully"]);
+} else {
+    echo json_encode(["success" => false, "message" => "Error updating student: " . $stmt->error]);
+}
+
+$stmt->close();
+$conn->close();
