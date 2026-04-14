@@ -187,6 +187,24 @@ class _AdminLoginPageState extends State<AdminLoginPage>
                                   ),
                                   const SizedBox(height: 40),
                                   _buildPremiumButton(),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.push(context, MaterialPageRoute(builder: (_) => AdminRegisterPage()));
+                                        },
+                                        child: const Text("Register", style: TextStyle(color: jmcSunglow, fontSize: 12)),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.push(context, MaterialPageRoute(builder: (_) => AdminResetPasswordPage()));
+                                        },
+                                        child: const Text("Forgot Password?", style: TextStyle(color: jmcSunglow, fontSize: 12)),
+                                      ),
+                                    ],
+                                  ),
                                   if (errorMessage.isNotEmpty) _buildErrorText(),
                                 ],
                               ),
@@ -356,6 +374,206 @@ class _AdminLoginPageState extends State<AdminLoginPage>
           color: Colors.redAccent,
           fontSize: 13,
           fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+}
+
+class AdminRegisterPage extends StatefulWidget {
+  @override
+  State<AdminRegisterPage> createState() => _AdminRegisterPageState();
+}
+
+class _AdminRegisterPageState extends State<AdminRegisterPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _securityQController = TextEditingController(text: "What is your first pet's name?");
+  final _securityAController = TextEditingController();
+
+  String errorMessage = "";
+  String successMessage = "";
+  bool isLoading = false;
+
+  void register() async {
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+    final email = _emailController.text.trim();
+    final sq = _securityQController.text.trim();
+    final sa = _securityAController.text.trim();
+
+    if (username.isEmpty || password.isEmpty || email.isEmpty || sa.isEmpty) {
+      setState(() => errorMessage = "Please fill all fields");
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+      errorMessage = "";
+    });
+
+    final success = await AppState.instance.registerAdmin(username, password, email, sq, sa);
+    setState(() => isLoading = false);
+
+    if (success) {
+      setState(() => successMessage = "Admin successfully registered!");
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) Navigator.pop(context);
+      });
+    } else {
+      setState(() => errorMessage = "Registration failed (username/email may exist)");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Register Admin"), backgroundColor: const Color(0xFF1E003E)),
+      backgroundColor: const Color(0xFF0F0B1E),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _usernameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: "Username", labelStyle: TextStyle(color: Colors.white54), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24))),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _emailController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: "Email", labelStyle: TextStyle(color: Colors.white54), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24))),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: "Password", labelStyle: TextStyle(color: Colors.white54), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24))),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _securityQController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: "Security Question", labelStyle: TextStyle(color: Colors.white54), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24))),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _securityAController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: "Security Answer", labelStyle: TextStyle(color: Colors.white54), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24))),
+                  ),
+                  const SizedBox(height: 24),
+                  if (errorMessage.isNotEmpty) Text(errorMessage, style: const TextStyle(color: Colors.redAccent)),
+                  if (successMessage.isNotEmpty) Text(successMessage, style: const TextStyle(color: Colors.green)),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: isLoading ? null : register,
+                    style: ElevatedButton.styleFrom(backgroundColor: jmcSunglow, foregroundColor: Colors.black, minimumSize: const Size(double.infinity, 50)),
+                    child: isLoading ? const CircularProgressIndicator() : const Text("Register"),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AdminResetPasswordPage extends StatefulWidget {
+  @override
+  State<AdminResetPasswordPage> createState() => _AdminResetPasswordPageState();
+}
+
+class _AdminResetPasswordPageState extends State<AdminResetPasswordPage> {
+  final _emailController = TextEditingController();
+  final _securityAController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+
+  String errorMessage = "";
+  String successMessage = "";
+  bool isLoading = false;
+
+  void resetPassword() async {
+    final email = _emailController.text.trim();
+    final sa = _securityAController.text.trim();
+    final np = _newPasswordController.text.trim();
+
+    if (email.isEmpty || sa.isEmpty || np.isEmpty) {
+      setState(() => errorMessage = "Please fill all fields");
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+      errorMessage = "";
+    });
+
+    final success = await AppState.instance.resetAdminPassword(email, sa, np);
+    setState(() => isLoading = false);
+
+    if (success) {
+      setState(() => successMessage = "Password successfully reset!");
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) Navigator.pop(context);
+      });
+    } else {
+      setState(() => errorMessage = "Reset failed. Invalid email or security answer.");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Reset Password"), backgroundColor: const Color(0xFF1E003E)),
+      backgroundColor: const Color(0xFF0F0B1E),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _emailController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: "Account Email", labelStyle: TextStyle(color: Colors.white54), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24))),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _securityAController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: "Security Answer (What is your first pet's name?)", labelStyle: TextStyle(color: Colors.white54), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24))),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _newPasswordController,
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: "New Password", labelStyle: TextStyle(color: Colors.white54), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24))),
+                ),
+                const SizedBox(height: 24),
+                if (errorMessage.isNotEmpty) Text(errorMessage, style: const TextStyle(color: Colors.redAccent)),
+                if (successMessage.isNotEmpty) Text(successMessage, style: const TextStyle(color: Colors.green)),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: isLoading ? null : resetPassword,
+                  style: ElevatedButton.styleFrom(backgroundColor: jmcSunglow, foregroundColor: Colors.black, minimumSize: const Size(double.infinity, 50)),
+                  child: isLoading ? const CircularProgressIndicator() : const Text("Update Password"),
+                )
+              ],
+            ),
+          ),
         ),
       ),
     );

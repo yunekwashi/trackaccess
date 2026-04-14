@@ -27,7 +27,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -50,6 +50,22 @@ class DatabaseService {
             await db.insert('rewards', {'name': 'Free Coffee', 'cost': 50, 'is_active': 1});
             await db.insert('rewards', {'name': '1 Day Extension', 'cost': 100, 'is_active': 1});
             await db.insert('rewards', {'name': 'School Merchandise', 'cost': 500, 'is_active': 1});
+          }
+        }
+        
+        if (oldVersion < 4) {
+          // Version 4: Add admins table
+          await _createAdminsTable(db);
+          final adminResults = await db.rawQuery('SELECT COUNT(*) FROM admins');
+          final adminCount = adminResults.isNotEmpty ? (adminResults.first.values.first as int) : 0;
+          if (adminCount == 0) {
+            await db.insert('admins', {
+              'username': 'admin',
+              'password': 'admin',
+              'email': 'admin@demo.com',
+              'security_question': 'Default',
+              'security_answer': 'admin'
+            });
           }
         }
       },
@@ -118,11 +134,21 @@ class DatabaseService {
 
     await _createRewardsTable(db);
     await _createDraftsTable(db);
+    await _createAdminsTable(db);
 
     // Seed initial rewards
     await db.insert('rewards', {'name': 'Free Coffee', 'cost': 50, 'is_active': 1});
     await db.insert('rewards', {'name': '1 Day Extension', 'cost': 100, 'is_active': 1});
     await db.insert('rewards', {'name': 'School Merchandise', 'cost': 500, 'is_active': 1});
+
+    // Seed default admin
+    await db.insert('admins', {
+      'username': 'admin',
+      'password': 'admin',
+      'email': 'admin@demo.com',
+      'security_question': 'Default',
+      'security_answer': 'admin'
+    });
 
     print("DatabaseService: Database initialized.");
   }
@@ -146,6 +172,60 @@ class DatabaseService {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     ''');
+  }
+
+  Future<void> _createAdminsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS admins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        email TEXT UNIQUE,
+        security_question TEXT,
+        security_answer TEXT
+      )
+    ''');
+  }
+
+  // --- Admins Operations ---
+
+  Future<Map<String, dynamic>?> getAdmin(String username) async {
+    final db = await database;
+    final maps = await db.query('admins', where: 'username = ?', whereArgs: [username]);
+    if (maps.isNotEmpty) {
+      return maps.first;
+    }
+    return null;
+  }
+
+  Future<bool> insertAdmin(Map<String, dynamic> adminData) async {
+    final db = await database;
+    try {
+      await db.insert('admins', adminData, conflictAlgorithm: ConflictAlgorithm.fail);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateAdminPassword(String username, String newPassword) async {
+    final db = await database;
+    int changes = await db.update(
+      'admins',
+      {'password': newPassword},
+      where: 'username = ?',
+      whereArgs: [username]
+    );
+    return changes > 0;
+  }
+
+  Future<Map<String, dynamic>?> getAdminByEmail(String email) async {
+    final db = await database;
+    final maps = await db.query('admins', where: 'email = ?', whereArgs: [email]);
+    if (maps.isNotEmpty) {
+      return maps.first;
+    }
+    return null;
   }
 
   // --- Rewards Operations ---

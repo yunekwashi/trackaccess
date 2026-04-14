@@ -1,4 +1,4 @@
-; Inno Setup Script for TrackAccess
+    ; Inno Setup Script for TrackAccess
 ; Generated for Flutter Windows App
 
 [Setup]

@@ -423,25 +423,46 @@ class AppState extends ChangeNotifier {
 
 
   /* ===========================
-     ADMIN LOGIN (via API)
+     ADMIN LOGIN (via SQLite)
   ============================ */
   Future<bool> loginAdmin(String username, String password) async {
-    // Local check for standalone version
+    final admin = await dbService.getAdmin(username);
+    if (admin != null) {
+      if (admin['password'] == password) {
+        isAdminLoggedIn = true;
+        notifyListeners();
+        return true;
+      }
+    }
+    // Fallback just in case DB is corrupted
     if (username == "admin" && password == "admin") {
       isAdminLoggedIn = true;
       notifyListeners();
       return true;
     }
+    return false;
+  }
 
-    try {
-      final success = await ApiService.login(username, password);
-      isAdminLoggedIn = success;
-      notifyListeners();
-      return success;
-    } catch (e) {
-      print("Login failed: $e");
-      return false;
+  Future<bool> registerAdmin(String username, String password, String email, String securityQuestion, String securityAnswer) async {
+    final success = await dbService.insertAdmin({
+      'username': username,
+      'password': password,
+      'email': email,
+      'security_question': securityQuestion,
+      'security_answer': securityAnswer,
+    });
+    return success;
+  }
+
+  Future<bool> resetAdminPassword(String email, String answer, String newPassword) async {
+    final admin = await dbService.getAdminByEmail(email);
+    if (admin != null) {
+      if (admin['security_answer']?.toString().toLowerCase() == answer.toLowerCase()) {
+        final success = await dbService.updateAdminPassword(admin['username'], newPassword);
+        return success;
+      }
     }
+    return false;
   }
 
   void logoutAdmin() {
