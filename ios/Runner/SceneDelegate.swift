@@ -1,6 +1,6 @@
 import Flutter
 import UIKit
 
-class SceneDelegate: FlutterSceneDelegate {
-
-}
+// SceneDelegate is intentionally empty.
+// All scene lifecycle handling is provided by FlutterSceneDelegate.
+class SceneDelegate: FlutterSceneDelegate {}
