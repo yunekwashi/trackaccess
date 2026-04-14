@@ -5,9 +5,8 @@
 #include "flutter/generated_plugin_registrant.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
-    : project_(project) {}
-
-FlutterWindow::~FlutterWindow() {}
+    : project_(project) = default;
+FlutterWindow::~FlutterWindow() = default;
 
 bool FlutterWindow::OnCreate() {
   if (!Win32Window::OnCreate()) {
@@ -56,15 +55,13 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     std::optional<LRESULT> result =
         flutter_controller_->HandleTopLevelWindowProc(hwnd, message, wparam,
                                                       lparam);
-    if (result) {
-      return *result;
+    if (result.has_value()) {
+      return result.value();
     }
   }
 
-  switch (message) {
-    case WM_FONTCHANGE:
-      flutter_controller_->engine()->ReloadSystemFonts();
-      break;
+  if (message == WM_FONTCHANGE) {
+    flutter_controller_->engine()->ReloadSystemFonts();
   }
 
   return Win32Window::MessageHandler(hwnd, message, wparam, lparam);
