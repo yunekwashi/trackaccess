@@ -149,9 +149,9 @@ LRESULT CALLBACK Win32Window::WndProc(HWND const window,
     // Fix L151: pointer -> uintptr_t -> LONG_PTR, all via static_cast
     auto* create_params = static_cast<Win32Window*>(window_struct->lpCreateParams);
     SetWindowLongPtr(window, GWLP_USERDATA,
-                     static_cast<LONG_PTR>(
-                         static_cast<std::uintptr_t>(
-                             reinterpret_cast<std::uintptr_t>(create_params))));
+                 static_cast<LONG_PTR>(
+                     reinterpret_cast<std::uintptr_t>(
+                         static_cast<void*>(create_params))));
     EnableFullDpiSupportIfAvailable(window);
     create_params->window_handle_ = window;
   } else if (Win32Window* that = GetThisFromHandle(window)) {
