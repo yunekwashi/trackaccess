@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Capstone Appendices for TrackAccess</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 1.5;
+            font-size: 12pt;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            font-family: Arial, sans-serif;
+            color: #000;
+        }
+        h1 { font-size: 18pt; text-align: center; }
+        h2 { font-size: 14pt; margin-top: 30px; }
+        h3 { font-size: 12pt; }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 10pt;
+            white-space: pre-wrap;
+        }
+        .placeholder {
+            border: 2px dashed #999;
+            padding: 40px;
+            text-align: center;
+            color: #666;
+            background-color: #f9f9f9;
+            margin: 20px 0;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Appendix B: API Documentation</h1>
+    <p>This section outlines the RESTful API endpoints utilized by the TrackAccess backend services to facilitate communication between the hardware scanner, the database, and the frontend interfaces.</p>
+
+    <h3>1. Register Student (<code>/backend/register_student.php</code>)</h3>
+    <ul>
+        <li><strong>Description:</strong> Registers a new student into the system and binds an RFID UID to their profile.</li>
+        <li><strong>Method:</strong> POST</li>
+        <li><strong>Content-Type:</strong> application/json</li>
+        <li><strong>Request Format:</strong>
+            <pre>{
+  "student_id": "2023-0001",
+  "name": "Juan Dela Cruz",
+  "rfid_uid": "A1 B2 C3 D4",
+  "course": "BSIT",
+  "year_level": "3"
+}</pre>
+        </li>
+        <li><strong>Response (Success):</strong>
+            <pre>{
+  "success": true,
+  "message": "Student registered successfully."
+}</pre>
+        </li>
+    </ul>
+
+    <h3>2. Update Student Data (<code>/backend/update_student.php</code>)</h3>
+    <ul>
+        <li><strong>Description:</strong> Updates an existing student's data, including manual point adjustments or status changes.</li>
+        <li><strong>Method:</strong> POST</li>
+        <li><strong>Request Format:</strong>
+            <pre>{
+  "student_id": "2023-0001",
+  "name": "Juan Dela Cruz",
+  "course": "BSIT",
+  "points": 10,
+  "isActive": true
+}</pre>
+        </li>
+        <li><strong>Response (Success):</strong>
+            <pre>{
+  "success": true,
+  "message": "Student updated successfully"
+}</pre>
+        </li>
+    </ul>
+
+    <h3>3. Hardware RFID Scan (<code>/backend/scan_rfid.php</code>)</h3>
+    <ul>
+        <li><strong>Description:</strong> Native endpoint called by the Arduino/ESP32 scanner when an RFID card is physical tapped.</li>
+        <li><strong>Method:</strong> POST</li>
+        <li><strong>Request Format:</strong>
+            <pre>{
+  "uid": "A1 B2 C3 D4"
+}</pre>
+        </li>
+        <li><strong>Response (Success):</strong>
+            <pre>{
+  "success": true,
+  "message": "Scan recorded successfully"
+}</pre>
+        </li>
+    </ul>
+
+    <h3>4. Fetch Leaderboards & Students (<code>/backend/get_students.php</code>)</h3>
+    <ul>
+        <li><strong>Description:</strong> Retrieves all registered students. The application uses this to generate the Leaderboards based on accumulated points.</li>
+        <li><strong>Method:</strong> GET</li>
+        <li><strong>Response Format:</strong>
+            <pre>[
+  {
+    "id": 1,
+    "student_id": "2023-0001",
+    "name": "Juan Dela Cruz",
+    "course": "BSIT",
+    "yearLevel": "3",
+    "uid": "A1 B2 C3 D4",
+    "points": 50,
+    "visits": 12,
+    "isActive": true
+  }
+]</pre>
+        </li>
+    </ul>
+
+    <h3>5. Admin Reporting / Activity Logs (<code>/backend/get_all_scans.php</code>)</h3>
+    <ul>
+        <li><strong>Description:</strong> Returns the chronological audit trail of all actions and scans for the Admin Report Dashboard.</li>
+        <li><strong>Method:</strong> GET</li>
+        <li><strong>Response Format:</strong>
+            <pre>{
+  "success": true,
+  "count": 1,
+  "logs": [
+    {
+      "id": "1",
+      "student_id": "2023-0001",
+      "student_name": "Juan Dela Cruz",
+      "action": "registered",
+      "details": "Registered new RFID.",
+      "timestamp": "2024-05-01 10:00:00"
+    }
+  ]
+}</pre>
+        </li>
+    </ul>
+
+    <h1 style="page-break-before: always;">Appendix D: Test Logs and Screenshots</h1>
+    <p>This section documents the results from system testing and User Acceptance Testing (UAT), verifying the stability of the TrackAccess platform.</p>
+
+    <h3>1. Environment Test Logs</h3>
+    <p>Compilation and execution environments were tested using Flutter's diagnostic logging and PHP server metrics. </p>
+    <ul>
+        <li><strong>Database Connection Health:</strong> Verified via script testing, outputting <code>Success! Connected to trackaccessdb</code>. The <code>setup_backend.sql</code> generated the necessary schema cleanly over 3 iterations.</li>
+        <li><strong>Frontend Compilation:</strong> The Flutter desktop application was compiled via <code>flutter build windows</code> natively, resolving all dependencies in <code>pubspec.yaml</code> and producing a 0-error diagnostic log (<code>flutter_01.log</code>).</li>
+    </ul>
+
+    <h3>2. Application Interfaces and Screenshots</h3>
+    
+    <div class="placeholder">
+        [INSERT SCREENSHOT 1 HERE] <br><br>
+        <strong>Figure D.1:</strong> The Administrator Login Screen verifying secure access control.
+    </div>
+
+    <div class="placeholder">
+        [INSERT SCREENSHOT 2 HERE] <br><br>
+        <strong>Figure D.2:</strong> System Dashboard Backend (index.php) confirming "Database: Connected" and displaying real-time scan statistics.
+    </div>
+
+    <div class="placeholder">
+        [INSERT SCREENSHOT 3 HERE] <br><br>
+        <strong>Figure D.3:</strong> The flutter Administrator Dashboard and Leaderboards view.
+    </div>
+
+    <div class="placeholder">
+        [INSERT SCREENSHOT 4 HERE] <br><br>
+        <strong>Figure D.4:</strong> Registration Screen demonstrating the binding of Student ID to RFID UID.
+    </div>
+
+    <div class="placeholder">
+        [INSERT SCREENSHOT 5 HERE] <br><br>
+        <strong>Figure D.5:</strong> Hardware prototype of the Arduino RFID scanner capturing a card sequence.
+    </div>
+
+
+    <h1 style="page-break-before: always;">Appendix E: User Manual and Deployment Guide</h1>
+
+    <h3>1. System Installation & Requirements</h3>
+    <ul>
+        <li><strong>Operating System:</strong> Windows 10 or Windows 11</li>
+        <li><strong>Dependencies:</strong> PHP 8.0+, MySQL Database (e.g., via XAMPP)</li>
+        <li><strong>Hardware:</strong> Minimum 4GB RAM, Arduino Uno/Nano with RC522 RFID Module</li>
+    </ul>
+
+    <h3>2. Administrator: Launching the System</h3>
+    <ol>
+        <li><strong>Start the Backend Server:</strong>
+            <ul>
+                <li>Locate the <code>trackaccess</code> master folder on the computer.</li>
+                <li>Navigate to the <code>backend/</code> folder.</li>
+                <li>Right-click the <code>run_standalone.ps1</code> file and select "Run with PowerShell".</li>
+                <li>This will automatically start the database connections and API framework. Do not close this terminal window while the system is in use.</li>
+            </ul>
+        </li>
+        <li><strong>Start the Frontend Dashboard:</strong>
+            <ul>
+                <li>Navigate to the frontend application executable (usually located in <code>build/windows/runner/Release/trackaccess.exe</code>).</li>
+                <li>Double click to open the visual TrackAccess Dashboard interface.</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h3>3. Hardware Operation (RFID Scanning)</h3>
+    <ol>
+        <li>Ensure the Arduino RFID scanner is securely attached via USB to the host computer.</li>
+        <li>Wait for the device to briefly flash, indicating it is powered and ready to accept input.</li>
+        <li>To scan, a user must hover their ID card within 2 inches of the RFID plate until a beep is heard.</li>
+        <li>The system will automatically record the scan in real-time.</li>
+    </ol>
+
+    <h3>4. Registering a New Student</h3>
+    <ol>
+        <li>Login to the frontend dashboard using Administrator credentials.</li>
+        <li>Navigate to the <strong>Add Member/Registration</strong> menu.</li>
+        <li>Type the user's Student ID, Name, Course, and Year Level into the text boxes.</li>
+        <li>Tap an unassigned RFID card on the scanner to link the physical UID code.</li>
+        <li>Click <strong>Register</strong> to save the profile to the database.</li>
+    </ol>
+
+    <h3>5. Viewing Leaderboards and Reports</h3>
+    <ol>
+        <li>On the main dashboard window, click <strong>Leaderboard</strong> to view the real-time ranking of students based on library visits and points.</li>
+        <li>Click <strong>Admin Reports</strong> to view a chronological audit trail showing exactly who logged into the library, when they logged in, and any point modifications made by admins.</li>
+    </ol>
+
+</body>
+</html>

@@ -24,7 +24,7 @@ $recent_logs = [];
 if (!$conn->connect_error) {
     if ($conn->select_db($dbname)) {
         $db_connected = true;
-        
+
         // Ensure activity_logs table exists (to prevent fatal errors on fresh installations)
         $conn->query("CREATE TABLE IF NOT EXISTS activity_logs (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -51,11 +51,12 @@ if (!$conn->connect_error) {
         $res = $conn->query("SELECT COUNT(*) as count FROM activity_logs WHERE DATE(timestamp) = CURDATE()");
         if ($res && $res->num_rows > 0) {
             $stats['logs_today'] = $res->fetch_assoc()['count'];
-        
+        }
+
         // Fetch Recent Logs
         $res = $conn->query("SELECT * FROM activity_logs ORDER BY timestamp DESC LIMIT 10");
         if ($res && $res->num_rows > 0) {
-            while($row = $res->fetch_assoc()) {
+            while ($row = $res->fetch_assoc()) {
                 $recent_logs[] = $row;
             }
         }
@@ -64,6 +65,7 @@ if (!$conn->connect_error) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -95,7 +97,7 @@ if (!$conn->connect_error) {
 
         body {
             background-color: var(--bg);
-            background-image: 
+            background-image:
                 radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
             color: var(--text-main);
@@ -145,8 +147,12 @@ if (!$conn->connect_error) {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background-color: <?php echo $db_connected ? 'var(--success)' : 'var(--error)'; ?>;
-            box-shadow: 0 0 10px <?php echo $db_connected ? 'var(--success)' : 'var(--error)'; ?>;
+            background-color:
+                <?php echo $db_connected ? 'var(--success)' : 'var(--error)'; ?>
+            ;
+            box-shadow: 0 0 10px
+                <?php echo $db_connected ? 'var(--success)' : 'var(--error)'; ?>
+            ;
         }
 
         /* Stats Grid */
@@ -297,19 +303,35 @@ if (!$conn->connect_error) {
 
         /* Animations */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .animate {
             animation: fadeIn 0.5s ease-out forwards;
         }
 
-        .delay-1 { animation-delay: 0.1s; }
-        .delay-2 { animation-delay: 0.2s; }
-        .delay-3 { animation-delay: 0.3s; }
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.3s;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header class="animate">
@@ -324,7 +346,8 @@ if (!$conn->connect_error) {
 
         <?php if (!$db_connected): ?>
             <div class="error-msg animate">
-                <strong>Attention:</strong> Could not connect to the database. Please ensure your Docker services are running and check the <code>.env</code> file configuration.
+                <strong>Attention:</strong> Could not connect to the database. Please ensure your Docker services are
+                running and check the <code>.env</code> file configuration.
                 <br>Error: <?php echo $conn->connect_error; ?>
             </div>
         <?php endif; ?>
@@ -360,18 +383,24 @@ if (!$conn->connect_error) {
                         <tbody>
                             <?php if (empty($recent_logs)): ?>
                                 <tr>
-                                    <td colspan="4" style="text-align: center; color: var(--text-dim); padding: 3rem;">No recent logs found. Start scanning to see data!</td>
+                                    <td colspan="4" style="text-align: center; color: var(--text-dim); padding: 3rem;">No
+                                        recent logs found. Start scanning to see data!</td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($recent_logs as $log): ?>
                                     <tr>
                                         <td>
-                                            <div style="font-weight: 600;"><?php echo htmlspecialchars($log['student_name']); ?></div>
-                                            <div style="font-size: 0.75rem; color: var(--text-dim);"><?php echo htmlspecialchars($log['student_id']); ?></div>
+                                            <div style="font-weight: 600;"><?php echo htmlspecialchars($log['student_name']); ?>
+                                            </div>
+                                            <div style="font-size: 0.75rem; color: var(--text-dim);">
+                                                <?php echo htmlspecialchars($log['student_id']); ?></div>
                                         </td>
-                                        <td><span class="badge-action"><?php echo htmlspecialchars($log['action']); ?></span></td>
-                                        <td style="color: var(--text-dim);"><?php echo htmlspecialchars($log['details']); ?></td>
-                                        <td style="white-space: nowrap;"><?php echo date('H:i:s', strtotime($log['timestamp'])); ?></td>
+                                        <td><span class="badge-action"><?php echo htmlspecialchars($log['action']); ?></span>
+                                        </td>
+                                        <td style="color: var(--text-dim);"><?php echo htmlspecialchars($log['details']); ?>
+                                        </td>
+                                        <td style="white-space: nowrap;">
+                                            <?php echo date('H:i:s', strtotime($log['timestamp'])); ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
@@ -401,14 +430,18 @@ if (!$conn->connect_error) {
                     </a>
                 </div>
 
-                <div style="margin-top: 2rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 1rem; border: 1px dashed var(--border);">
-                    <h4 style="font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--primary-light);">Developer Note</h4>
+                <div
+                    style="margin-top: 2rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 1rem; border: 1px dashed var(--border);">
+                    <h4 style="font-size: 0.875rem; margin-bottom: 0.5rem; color: var(--primary-light);">Developer Note
+                    </h4>
                     <p style="font-size: 0.75rem; color: var(--text-dim); line-height: 1.5;">
-                        This dashboard is served from the <code>trackaccess_app</code> container. All API endpoints are accessible via this host.
+                        This dashboard is served from the <code>trackaccess_app</code> container. All API endpoints are
+                        accessible via this host.
                     </p>
                 </div>
             </div>
         </div>
     </div>
 </body>
+
 </html>

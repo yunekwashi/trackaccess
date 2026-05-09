@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 import 'admin_login.dart';
-import 'api_service.dart'; // <-- Still here for potential sync, but we use SQLite
+import 'package:intl/intl.dart'; // <-- Still here for potential sync, but we use SQLite
 import 'database_service.dart';
 
 // JMCFI Official Colors
@@ -60,6 +60,29 @@ const List<String> yearLevels = [
   "2nd Year",
   "3rd Year",
   "4th Year",
+];
+
+const List<String> jmcfiColleges = [
+  "College of Arts and Sciences",
+  "College of Business Administration",
+  "College of Computer Studies",
+  "College of Criminal Justice Education",
+  "College of Education",
+  "College of Engineering",
+  "College of Law",
+  "College of Medicine",
+  "College of Nursing",
+  "College of Pharmacy",
+  "College of Medical Technology",
+  "College of Radiologic Technology",
+  "Technical-Vocational Department",
+];
+
+const List<String> genderOptions = [
+  "Male",
+  "Female",
+  "Other",
+  "Prefer not to say",
 ];
 
 /* ===========================
@@ -118,8 +141,11 @@ class Student {
   String uid;
   String id;
   String name;
+  String gender;
+  String college;
   String course;
   String yearLevel;
+  String researchYear;
   int points;
   int visits;
   bool isActive;
@@ -130,8 +156,11 @@ class Student {
     required this.uid,
     required this.id,
     required this.name,
+    this.gender = "N/A",
+    this.college = "N/A",
     this.course = "N/A",
     this.yearLevel = "N/A",
+    this.researchYear = "N/A",
     this.points = 0,
     this.visits = 0,
     this.isActive = true,
@@ -351,24 +380,27 @@ class AppState extends ChangeNotifier {
                   _serialBuffer.write(raw);
                   lastRawData = _serialBuffer.toString();
                   
-                  // Keep buffer size reasonable
-                  if (_serialBuffer.length > 1000) {
-                     _serialBuffer.clear();
-                  }
-
-                  if (raw.contains('\n') || _serialBuffer.toString().contains('\n')) {
-                    final content = _serialBuffer.toString();
-                    final lines = content.split('\n');
+                  // Process if buffer contains line endings or grows too large
+                  String currentContent = _serialBuffer.toString();
+                  if (currentContent.contains('\n') || currentContent.contains('\r') || currentContent.length > 32) {
+                    // Split by various possible terminators
+                    final parts = currentContent.split(RegExp(r'[\r\n]+'));
                     
-                    // The last element might be incomplete
+                    // If we have parts, the last one might be incomplete
                     _serialBuffer.clear();
-                    _serialBuffer.write(lines.last);
+                    if (!currentContent.endsWith('\n') && !currentContent.endsWith('\r')) {
+                      _serialBuffer.write(parts.last);
+                    }
                     
-                    for (int i = 0; i < lines.length - 1; i++) {
-                      final uid = lines[i].trim();
+                    // Process all completed parts
+                    for (var part in parts) {
+                      final uid = part.trim();
+                      // RFID UIDs are usually 4-10 hex characters or 10 digits
                       if (uid.isNotEmpty && uid.length >= 4) {
                          print("TrackAccess: Valid UID received: $uid");
                          _processScan(uid);
+                         // Clear buffer once processed to prevent repeats
+                         _serialBuffer.clear();
                       }
                     }
                   }
@@ -426,6 +458,14 @@ class AppState extends ChangeNotifier {
      ADMIN LOGIN (via SQLite)
   ============================ */
   Future<bool> loginAdmin(String username, String password) async {
+    // 1. HARDCODED DEFAULT (Never changes)
+    if (username == "admin" && password == "admin") {
+      isAdminLoggedIn = true;
+      notifyListeners();
+      return true;
+    }
+
+    // 2. DATABASE CHECK (For secondary admins)
     final admin = await dbService.getAdmin(username);
     if (admin != null) {
       if (admin['password'] == password) {
@@ -433,12 +473,6 @@ class AppState extends ChangeNotifier {
         notifyListeners();
         return true;
       }
-    }
-    // Fallback just in case DB is corrupted
-    if (username == "admin" && password == "admin") {
-      isAdminLoggedIn = true;
-      notifyListeners();
-      return true;
     }
     return false;
   }
@@ -457,12 +491,25 @@ class AppState extends ChangeNotifier {
   Future<bool> resetAdminPassword(String email, String answer, String newPassword) async {
     final admin = await dbService.getAdminByEmail(email);
     if (admin != null) {
+      // PREVENT RESETTING THE DEFAULT ADMIN
+      if (admin['username'] == 'admin') {
+        return false; 
+      }
+
       if (admin['security_answer']?.toString().toLowerCase() == answer.toLowerCase()) {
         final success = await dbService.updateAdminPassword(admin['username'], newPassword);
         return success;
       }
     }
     return false;
+  }
+
+  Future<String?> getSecurityQuestion(String email) async {
+    final admin = await dbService.getAdminByEmail(email);
+    if (admin != null) {
+      return admin['security_question'];
+    }
+    return null;
   }
 
   void logoutAdmin() {
@@ -542,19 +589,31 @@ class AppState extends ChangeNotifier {
   }
 
   // --- UI Mutators ---
-  Future<void> registerStudent(String name, String id, String uid, String course, String yearLevel) async {
-    final s = Student(uid: uid, id: id, name: name, course: course, yearLevel: yearLevel);
+  Future<void> registerStudent(String name, String id, String uid, String course, String yearLevel, {String gender = "N/A", String college = "N/A", String researchYear = "N/A"}) async {
+    final s = Student(
+      uid: uid, 
+      id: id, 
+      name: name, 
+      course: course, 
+      yearLevel: yearLevel,
+      gender: gender,
+      college: college,
+      researchYear: researchYear,
+    );
     await dbService.insertStudent(s);
     await loadStudents();
   }
 
-  Future<void> updateStudent(Student s, String name, String id, String uid, {String? course, String? yearLevel}) async {
+  Future<void> updateStudent(Student s, String name, String id, String uid, {String? course, String? yearLevel, String? gender, String? college, String? researchYear}) async {
     final Map<String, dynamic> data = {
       'name': name,
       'rfid_uid': uid,
     };
     if (course != null) data['course'] = course;
     if (yearLevel != null) data['year_level'] = yearLevel;
+    if (gender != null) data['gender'] = gender;
+    if (college != null) data['college'] = college;
+    if (researchYear != null) data['research_year'] = researchYear;
     
     await dbService.updateStudent(s.id, data);
     await loadStudents();
@@ -1074,11 +1133,10 @@ class ScanAlertOverlay extends StatelessWidget {
 
     switch (state.lastScanResult) {
       case "Success":
-        bgColor = Colors.green.shade600;
-        icon = state.lastScanAction == "Entry"
-            ? Icons.login_rounded
-            : Icons.logout_rounded;
-        title = state.lastScanAction == "Entry" ? "Welcome!" : "Goodbye!";
+        bool isEntry = state.lastScanAction == "Entry";
+        bgColor = isEntry ? Colors.green.shade600 : Colors.red.shade600;
+        icon = isEntry ? Icons.login_rounded : Icons.logout_rounded;
+        title = isEntry ? "Welcome!" : "Goodbye!";
         subtitle = state.lastScanName ?? "";
         break;
       case "Wait":
@@ -1641,88 +1699,108 @@ class _AdminStatsGrid extends StatelessWidget {
         runSpacing: 16,
         alignment: WrapAlignment.start,
         children: [
-          _statCard("Today's Visits", state.todayVisits(), Icons.today),
-          _statCard("This Month", state.thisMonthVisits(), Icons.calendar_month),
-          _statCard("Total Visits", state.totalVisits(), Icons.history),
-          _statCard("Total Students", state.students.length, Icons.people),
+          analyticsInfoCard(
+            title: "Today's Visits",
+            value: state.todayVisits(),
+            icon: Icons.today,
+            color: Colors.blue,
+          ),
+          analyticsInfoCard(
+            title: "This Month",
+            value: state.thisMonthVisits(),
+            icon: Icons.calendar_month,
+            color: Colors.green,
+          ),
+          analyticsInfoCard(
+            title: "Total Visits",
+            value: state.totalVisits(),
+            icon: Icons.history,
+            color: Colors.orange,
+          ),
+          analyticsInfoCard(
+            title: "Total Students",
+            value: state.students.length,
+            icon: Icons.people,
+            color: Colors.teal,
+          ),
         ],
       ),
     );
   }
+}
 
-  static Widget _statCard(String title, int value, IconData icon) {
-    return Container(
-      width: 220,
-      height: 165,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: jmcIndigo.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+Widget analyticsInfoCard({
+  required String title,
+  required dynamic value,
+  required IconData icon,
+  String? subtitle,
+  Color color = jmcIndigo,
+}) {
+  return Container(
+    width: 220,
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: color.withOpacity(0.08),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+      ],
+      border: Border.all(color: color.withOpacity(0.1)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 20, color: color),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          value.toString(),
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.bold,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ],
-        border: Border.all(color: jmcIndigo.withOpacity(0.1)),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Icon(
-              icon,
-              size: 100,
-              color: jmcIndigo.withOpacity(0.03),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: jmcIndigo.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(icon, size: 24, color: jmcIndigo),
-                    ),
-                    const Spacer(),
-                  ],
-                ),
-                const Spacer(),
-                Text(
-                  value.toString(),
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: jmcIndigo,
-                    letterSpacing: -1,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  title.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
 }
 
 /* ===========================
@@ -1742,8 +1820,11 @@ class _StudentManagementState extends State<StudentManagement> {
   void editStudent(Student student) {
     TextEditingController nameCtrl = TextEditingController(text: student.name);
     TextEditingController uidCtrl = TextEditingController(text: student.uid);
+    TextEditingController researchYearCtrl = TextEditingController(text: student.researchYear);
     String? selectedCourse = jmcfiCourses.contains(student.course) ? student.course : null;
     String? selectedYear = yearLevels.contains(student.yearLevel) ? student.yearLevel : null;
+    String? selectedCollege = jmcfiColleges.contains(student.college) ? student.college : null;
+    String? selectedGender = genderOptions.contains(student.gender) ? student.gender : null;
 
     showDialog(
       context: context,
@@ -1759,17 +1840,44 @@ class _StudentManagementState extends State<StudentManagement> {
                     decoration: const InputDecoration(labelText: "Full Name")),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedCourse,
-                  decoration: const InputDecoration(labelText: "Course"),
-                  items: jmcfiCourses.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 12)))).toList(),
-                  onChanged: (val) => setDialogState(() => selectedCourse = val),
+                  value: selectedGender,
+                  decoration: const InputDecoration(labelText: "Gender"),
+                  items: genderOptions.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                  onChanged: (val) => setDialogState(() => selectedGender = val),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedYear,
-                  decoration: const InputDecoration(labelText: "Year Level"),
-                  items: yearLevels.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
-                  onChanged: (val) => setDialogState(() => selectedYear = val),
+                  value: selectedCollege,
+                  decoration: const InputDecoration(labelText: "College"),
+                  items: jmcfiColleges.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 11)))).toList(),
+                  onChanged: (val) => setDialogState(() => selectedCollege = val),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedCourse,
+                  decoration: const InputDecoration(labelText: "Course/Program"),
+                  items: jmcfiCourses.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 11)))).toList(),
+                  onChanged: (val) => setDialogState(() => selectedCourse = val),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: selectedYear,
+                        decoration: const InputDecoration(labelText: "Year Level"),
+                        items: yearLevels.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
+                        onChanged: (val) => setDialogState(() => selectedYear = val),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: researchYearCtrl,
+                        decoration: const InputDecoration(labelText: "Research Year", hintText: "e.g. 2024-2025"),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -1810,11 +1918,14 @@ class _StudentManagementState extends State<StudentManagement> {
                 child: const Text("Cancel")),
             ElevatedButton(
               onPressed: () {
-                setState(() {
-                  state.updateStudent(
-                      student, nameCtrl.text, uidCtrl.text, uidCtrl.text,
-                      course: selectedCourse, yearLevel: selectedYear);
-                });
+                state.updateStudent(
+                  student, nameCtrl.text, student.id, uidCtrl.text,
+                  course: selectedCourse, 
+                  yearLevel: selectedYear,
+                  gender: selectedGender,
+                  college: selectedCollege,
+                  researchYear: researchYearCtrl.text,
+                );
                 Navigator.pop(context);
               },
               child: const Text("Save"),
@@ -2048,16 +2159,24 @@ class _StudentManagementState extends State<StudentManagement> {
     final draft = await state.dbService.loadDraft('register_student');
     
     TextEditingController nameCtrl = TextEditingController(text: draft?['name'] ?? "");
+    TextEditingController idCtrl = TextEditingController(text: draft?['id'] ?? "");
     TextEditingController uidCtrl = TextEditingController(text: draft?['uid'] ?? "");
+    TextEditingController researchYearCtrl = TextEditingController(text: draft?['research_year'] ?? "");
     String? selectedCourse = draft?['course'];
     String? selectedYear = draft?['year'];
+    String? selectedCollege = draft?['college'];
+    String? selectedGender = draft?['gender'];
 
     void updateDraft() {
       state.dbService.saveDraft('register_student', {
         'name': nameCtrl.text,
+        'id': idCtrl.text,
         'uid': uidCtrl.text,
         'course': selectedCourse,
         'year': selectedYear,
+        'college': selectedCollege,
+        'gender': selectedGender,
+        'research_year': researchYearCtrl.text,
       });
     }
 
@@ -2076,42 +2195,92 @@ class _StudentManagementState extends State<StudentManagement> {
                     onChanged: (_) => updateDraft(),
                     decoration: const InputDecoration(labelText: "Full Name *")),
                 const SizedBox(height: 12),
+                TextField(
+                    controller: idCtrl,
+                    onChanged: (_) => updateDraft(),
+                    decoration: const InputDecoration(
+                      labelText: "Student Number / ID *",
+                      hintText: "e.g. 2021-0001",
+                    )),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedGender,
+                  decoration: const InputDecoration(labelText: "Gender *"),
+                  items: genderOptions.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                  onChanged: (val) {
+                    setDialogState(() => selectedGender = val);
+                    updateDraft();
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedCollege,
+                  decoration: const InputDecoration(labelText: "College *"),
+                  items: jmcfiColleges.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 11)))).toList(),
+                  onChanged: (val) {
+                    setDialogState(() => selectedCollege = val);
+                    updateDraft();
+                  },
+                ),
+                const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: selectedCourse,
-                  decoration: const InputDecoration(labelText: "Course *"),
-                  items: jmcfiCourses.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 12)))).toList(),
-                  hint: const Text("Select Course"),
+                  decoration: const InputDecoration(labelText: "Course/Program *"),
+                  items: jmcfiCourses.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 11)))).toList(),
+                  hint: const Text("Select Program"),
                   onChanged: (val) {
                     setDialogState(() => selectedCourse = val);
                     updateDraft();
                   },
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedYear,
-                  decoration: const InputDecoration(labelText: "Year Level *"),
-                  items: yearLevels.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
-                  hint: const Text("Select Year Level"),
-                  onChanged: (val) {
-                    setDialogState(() => selectedYear = val);
-                    updateDraft();
-                  },
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: selectedYear,
+                        decoration: const InputDecoration(labelText: "Year Level *"),
+                        items: yearLevels.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
+                        hint: const Text("Year"),
+                        onChanged: (val) {
+                          setDialogState(() => selectedYear = val);
+                          updateDraft();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: researchYearCtrl,
+                        onChanged: (_) => updateDraft(),
+                        decoration: const InputDecoration(labelText: "Research Year", hintText: "e.g. 2024-25"),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 // AUTOMATIC AUTO-FILL UID on Scan
                 AnimatedBuilder(
                   animation: state,
                   builder: (context, _) {
-                    // Automatically fill UID if scanned while dialog is open!
-                    if (state.lastScanUID != null &&
-                        state.lastScanTime != null &&
-                        state.lastScanTime!.isAfter(dialogOpenTime)) {
+                    // Automatically fill UID ONLY if scanned while dialog is open!
+                    if (state.lastScanUID != null && state.lastScanUID!.isNotEmpty &&
+                        state.lastScanTime != null && state.lastScanTime!.isAfter(dialogOpenTime)) {
                       if (uidCtrl.text != state.lastScanUID) {
-                        // Use postFrameCallback to avoid modifying state during build
                         WidgetsBinding.instance.addPostFrameCallback((_) {
-                           uidCtrl.text = state.lastScanUID!;
-                           updateDraft();
-                           setDialogState(() {}); // Ensure the UI reflects the change
+                           if (uidCtrl.text != state.lastScanUID) {
+                             uidCtrl.text = state.lastScanUID!;
+                             updateDraft();
+                             setDialogState(() {}); 
+                             
+                             ScaffoldMessenger.of(context).showSnackBar(
+                               SnackBar(
+                                 content: Text("RFID Captured: ${state.lastScanUID}"),
+                                 duration: const Duration(seconds: 1),
+                                 backgroundColor: jmcIndigo,
+                               )
+                             );
+                           }
                         });
                       }
                     }
@@ -2159,47 +2328,73 @@ class _StudentManagementState extends State<StudentManagement> {
             OutlinedButton(
               onPressed: () async {
                 if (nameCtrl.text.trim().isEmpty || 
+                    idCtrl.text.trim().isEmpty ||
                     uidCtrl.text.trim().isEmpty || 
                     selectedCourse == null || 
-                    selectedYear == null) {
+                    selectedYear == null ||
+                    selectedCollege == null ||
+                    selectedGender == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("All fields are required! (Name, UID, Course, and Year)"),
-                      backgroundColor: Colors.red,
-                    ),
+                    const SnackBar(content: Text("Please fill all required fields!"), backgroundColor: Colors.red),
                   );
                   return;
                 }
 
-                // Prevent duplicate UID
-                if (state.students.any((s) => s.uid == uidCtrl.text)) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Registration Failed: This RFID UID is already in the system!"),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
+                // DUPLICATE CHECKS
+                if (state.students.any((s) => s.id.trim().toLowerCase() == idCtrl.text.trim().toLowerCase())) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Student ID is already registered!"), backgroundColor: Colors.red),
+                  );
                   return;
                 }
 
+                if (state.students.any((s) => s.uid.trim() == uidCtrl.text.trim())) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("This RFID card is already assigned!"), backgroundColor: Colors.red),
+                  );
+                  return;
+                }
+
+                if (state.students.any((s) => 
+                    s.name.trim().toLowerCase() == nameCtrl.text.trim().toLowerCase() && 
+                    s.course == selectedCourse)) {
+                  bool? proceed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text("Possible Duplicate"),
+                      content: Text("A student named '${nameCtrl.text}' is already in '$selectedCourse'. Proceed anyway?"),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
+                        ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Register")),
+                      ],
+                    ),
+                  );
+                  if (proceed != true) return;
+                }
+
                 await state.registerStudent(
-                    nameCtrl.text, uidCtrl.text, uidCtrl.text, 
-                    selectedCourse ?? "N/A", selectedYear ?? "N/A");
-                await state.dbService.clearDraft('register_student');
+                    nameCtrl.text, idCtrl.text, uidCtrl.text, 
+                    selectedCourse!, selectedYear!,
+                    gender: selectedGender!,
+                    college: selectedCollege!,
+                    researchYear: researchYearCtrl.text
+                );
                 
-                // Clear fields for the next student
                 nameCtrl.clear();
+                idCtrl.clear();
                 uidCtrl.clear();
+                researchYearCtrl.clear();
                 setDialogState(() {
                   selectedCourse = null;
                   selectedYear = null;
+                  selectedCollege = null;
+                  selectedGender = null;
                 });
+                updateDraft();
 
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Student registered. You can add another.")),
+                    const SnackBar(content: Text("Student registered.")),
                   );
                 }
               },
@@ -2208,34 +2403,40 @@ class _StudentManagementState extends State<StudentManagement> {
             ElevatedButton(
               onPressed: () async {
                 if (nameCtrl.text.trim().isEmpty || 
+                    idCtrl.text.trim().isEmpty ||
                     uidCtrl.text.trim().isEmpty || 
                     selectedCourse == null || 
-                    selectedYear == null) {
+                    selectedYear == null ||
+                    selectedCollege == null ||
+                    selectedGender == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("All fields are required! (Name, UID, Course, and Year)"),
-                      backgroundColor: Colors.red,
-                    ),
+                    const SnackBar(content: Text("Please fill all required fields!"), backgroundColor: Colors.red),
                   );
                   return;
                 }
 
-                // Prevent duplicate UID
-                if (state.students.any((s) => s.uid == uidCtrl.text)) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Registration Failed: This RFID UID is already in the system!"),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
+                // DUPLICATE CHECKS
+                if (state.students.any((s) => s.id.trim().toLowerCase() == idCtrl.text.trim().toLowerCase())) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Student ID is already registered!"), backgroundColor: Colors.red),
+                  );
+                  return;
+                }
+
+                if (state.students.any((s) => s.uid.trim() == uidCtrl.text.trim())) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("This RFID card is already assigned!"), backgroundColor: Colors.red),
+                  );
                   return;
                 }
 
                 await state.registerStudent(
-                    nameCtrl.text, uidCtrl.text, uidCtrl.text, 
-                    selectedCourse ?? "N/A", selectedYear ?? "N/A");
+                    nameCtrl.text, idCtrl.text, uidCtrl.text, 
+                    selectedCourse!, selectedYear!,
+                    gender: selectedGender!,
+                    college: selectedCollege!,
+                    researchYear: researchYearCtrl.text
+                );
                 await state.dbService.clearDraft('register_student');
                 if (context.mounted) {
                   Navigator.pop(context);
@@ -2261,13 +2462,43 @@ class AttendanceAnalytics extends StatefulWidget {
 }
 
 class _AttendanceAnalyticsState extends State<AttendanceAnalytics> {
+  Widget _buildFilterDropdown(String label, String? current, List<String> options, Function(String?) onChanged) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: current != null ? jmcIndigo.withOpacity(0.1) : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: current != null ? jmcIndigo.withOpacity(0.3) : Colors.grey.shade300),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: current,
+          hint: Text(label, style: const TextStyle(fontSize: 12)),
+          style: const TextStyle(fontSize: 12, color: Colors.black87),
+          items: [
+            const DropdownMenuItem(value: null, child: Text("All")),
+            ...options.map((o) => DropdownMenuItem(value: o, child: Text(o, style: const TextStyle(fontSize: 11)))),
+          ],
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
   final AppState state = AppState.instance;
 
   String selectedLibrary = "College Library";
   String searchQuery = "";
+  
+  // Advanced Filters
+  String? filterCollege;
+  String? filterCourse;
+  String? filterYear;
+  String? filterGender;
+  DateTimeRange? filterDateRange;
 
-  int count(String library, [String? detail]) {
-    return state.visitLogs.where((l) {
+  int count(String library, List<AttendanceLog> logs, [String? detail]) {
+    return logs.where((l) {
       if (detail == null) return l.library == library;
       return l.library == library && l.detail == detail;
     }).length;
@@ -2278,72 +2509,215 @@ class _AttendanceAnalyticsState extends State<AttendanceAnalytics> {
     return AnimatedBuilder(
       animation: state,
       builder: (context, _) {
-        final recentLogs = state.visitLogs
-            .where((l) => l.library == selectedLibrary)
-            .toList()
-            .reversed
-            .take(10);
+        // Apply Filters to Logs
+        final filteredLogs = state.visitLogs.where((l) {
+          if (l.library != selectedLibrary) return false;
+          
+          if (filterDateRange != null) {
+            if (l.time.isBefore(filterDateRange!.start) || l.time.isAfter(filterDateRange!.end.add(const Duration(days: 1)))) {
+              return false;
+            }
+          }
+          
+          final student = state.students.where((s) => s.name == l.studentName).firstOrNull;
+          if (student == null) return false;
 
-    final filteredStudents = state.students.where((s) {
-      final q = searchQuery.toLowerCase();
-      return s.name.toLowerCase().contains(q) || s.id.toLowerCase().contains(q);
-    }).toList();
+          // Apply Search Query to Logs too
+          final q = searchQuery.toLowerCase();
+          if (q.isNotEmpty) {
+            bool matches = student.name.toLowerCase().contains(q) || 
+                           student.id.toLowerCase().contains(q) ||
+                           student.course.toLowerCase().contains(q) ||
+                           student.college.toLowerCase().contains(q);
+            if (!matches) return false;
+          }
+          
+          if (filterCollege != null && student.college != filterCollege) return false;
+          if (filterCourse != null && student.course != filterCourse) return false;
+          if (filterYear != null && student.yearLevel != filterYear) return false;
+          if (filterGender != null && student.gender != filterGender) return false;
+          
+          return true;
+        }).toList();
 
-    // Generate Master Event Log
-    final List<({DateTime time, String name, String id, String action, String detail})> allEvents = [];
-    final q = searchQuery.toLowerCase();
+        final recentLogs = filteredLogs.reversed.take(10);
 
-    for (final s in state.students) {
-      if (q.isNotEmpty && !s.name.toLowerCase().contains(q) && !s.id.toLowerCase().contains(q)) continue;
-      
-      for (final pLog in s.pointLogs) {
-        allEvents.add((
-          time: pLog.time,
-          name: s.name,
-          id: s.uid,
-          action: pLog.value > 0 ? "Points Altered" : "Redeemed Reward",
-          detail: "${pLog.type} (${pLog.value > 0 ? '+' : ''}${pLog.value} pts)"
-        ));
-      }
-    }
+        // Apply Filters to Students (for the table)
+        final filteredStudents = state.students.where((s) {
+          final q = searchQuery.toLowerCase();
+          if (q.isNotEmpty) {
+            bool matches = s.name.toLowerCase().contains(q) || 
+                           s.id.toLowerCase().contains(q) ||
+                           s.course.toLowerCase().contains(q) ||
+                           s.college.toLowerCase().contains(q) ||
+                           s.yearLevel.toLowerCase().contains(q);
+            if (!matches) return false;
+          }
+          
+          if (filterCollege != null && s.college != filterCollege) return false;
+          if (filterCourse != null && s.course != filterCourse) return false;
+          if (filterYear != null && s.yearLevel != filterYear) return false;
+          if (filterGender != null && s.gender != filterGender) return false;
+          
+          return true;
+        }).toList();
 
-    for (final vLog in state.visitLogs) {
-      final student = state.students.where((s) => s.name == vLog.studentName).firstOrNull;
-      if (student == null) continue;
-      if (q.isNotEmpty && !student.name.toLowerCase().contains(q) && !student.id.toLowerCase().contains(q)) continue;
-      
-      allEvents.add((
-        time: vLog.time,
-        name: student.name,
-        id: student.uid,
-        action: "Library ${vLog.detail}",
-        detail: vLog.library,
-      ));
-    }
+        // Calculate Stats
+        Map<String, int> collegeStats = {};
+        Map<String, int> courseStats = {};
+        int maleCount = 0;
+        int femaleCount = 0;
 
-    allEvents.sort((a, b) => b.time.compareTo(a.time));
+        for (final l in filteredLogs) {
+          final student = state.students.where((s) => s.name == l.studentName).firstOrNull;
+          if (student != null) {
+            collegeStats[student.college] = (collegeStats[student.college] ?? 0) + 1;
+            courseStats[student.course] = (courseStats[student.course] ?? 0) + 1;
+            if (student.gender == "Male") maleCount++;
+            if (student.gender == "Female") femaleCount++;
+          }
+        }
+
+        final topCollege = collegeStats.entries.isEmpty 
+            ? "N/A" 
+            : collegeStats.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+        
+        final topCourse = courseStats.entries.isEmpty 
+            ? "N/A" 
+            : courseStats.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+
+        // Generate Master Event Log
+        final List<({DateTime time, String name, String id, String action, String detail})> allEvents = [];
+        final q = searchQuery.toLowerCase();
+
+        for (final s in filteredStudents) {
+          for (final pLog in s.pointLogs) {
+            if (filterDateRange != null && (pLog.time.isBefore(filterDateRange!.start) || pLog.time.isAfter(filterDateRange!.end.add(const Duration(days: 1))))) continue;
+            
+            allEvents.add((
+              time: pLog.time,
+              name: s.name,
+              id: s.id,
+              action: pLog.value > 0 ? "Points Altered" : "Redeemed Reward",
+              detail: "${pLog.type} (${pLog.value > 0 ? '+' : ''}${pLog.value} pts)"
+            ));
+          }
+        }
+
+        for (final vLog in filteredLogs) {
+          final student = state.students.where((s) => s.name == vLog.studentName).firstOrNull;
+          if (student == null) continue;
+          
+          allEvents.add((
+            time: vLog.time,
+            name: student.name,
+            id: student.id,
+            action: "Library ${vLog.detail}",
+            detail: vLog.library,
+          ));
+        }
+
+        allEvents.sort((a, b) => b.time.compareTo(a.time));
 
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        const SectionHeader(title: "Attendance Analytics"),
-        const SizedBox(height: 10),
+        Row(
+          children: [
+            const Expanded(child: SectionHeader(title: "Attendance Analytics")),
+            TextButton.icon(
+              icon: const Icon(Icons.filter_list_rounded),
+              label: Text(filterDateRange == null ? "Select Date Range" : "${DateFormat('MMM d').format(filterDateRange!.start)} - ${DateFormat('MMM d').format(filterDateRange!.end)}"),
+              onPressed: () async {
+                final picked = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime(2023),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                  initialDateRange: filterDateRange,
+                );
+                if (picked != null) setState(() => filterDateRange = picked);
+              },
+            ),
+            if (filterDateRange != null || filterCollege != null || filterCourse != null || filterYear != null || filterGender != null)
+              IconButton(
+                icon: const Icon(Icons.clear_rounded, color: Colors.red),
+                tooltip: "Clear All Filters",
+                onPressed: () => setState(() {
+                  filterDateRange = null;
+                  filterCollege = null;
+                  filterCourse = null;
+                  filterYear = null;
+                  filterGender = null;
+                }),
+              ),
+          ],
+        ),
+        
+        // Filter Chips Row
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Row(
+            children: [
+              _buildFilterDropdown("College", filterCollege, jmcfiColleges, (val) => setState(() => filterCollege = val)),
+              const SizedBox(width: 8),
+              _buildFilterDropdown("Program", filterCourse, jmcfiCourses, (val) => setState(() => filterCourse = val)),
+              const SizedBox(width: 8),
+              _buildFilterDropdown("Year", filterYear, yearLevels, (val) => setState(() => filterYear = val)),
+              const SizedBox(width: 8),
+              _buildFilterDropdown("Gender", filterGender, genderOptions, (val) => setState(() => filterGender = val)),
+            ],
+          ),
+        ),
 
         Row(
           children: [
             Expanded(
               child: analyticsInfoCard(
-                title: "Total Usage",
-                value: count(selectedLibrary),
+                title: "Usage Count",
+                value: filteredLogs.length,
                 icon: Icons.library_books_rounded,
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: analyticsInfoCard(
-                title: "Entries",
-                value: count(selectedLibrary, "Entry"),
-                icon: Icons.meeting_room_rounded,
+                title: "Top College",
+                subtitle: topCollege,
+                value: collegeStats[topCollege] ?? 0,
+                icon: Icons.school_rounded,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: analyticsInfoCard(
+                title: "Top Program",
+                subtitle: topCourse,
+                value: courseStats[topCourse] ?? 0,
+                icon: Icons.assignment_ind_rounded,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: analyticsInfoCard(
+                title: "Male Users",
+                value: maleCount,
+                icon: Icons.male_rounded,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: analyticsInfoCard(
+                title: "Female Users",
+                value: femaleCount,
+                icon: Icons.female_rounded,
+                color: Colors.pink,
               ),
             ),
           ],
@@ -2463,16 +2837,19 @@ class _AttendanceAnalyticsState extends State<AttendanceAnalytics> {
               headingRowColor: MaterialStateProperty.all(Colors.grey.shade50),
               columns: const [
                 DataColumn(
-                    label: Text("Student Name",
+                    label: Text("Name",
                         style: TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(
-                    label: Text("UID",
+                    label: Text("Gender",
                         style: TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(
-                    label: Text("Course Year",
+                    label: Text("College",
                         style: TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(
-                    label: Text("Points",
+                    label: Text("Course",
+                        style: TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(
+                    label: Text("Year",
                         style: TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(
                     label: Text("Visits",
@@ -2500,9 +2877,10 @@ class _AttendanceAnalyticsState extends State<AttendanceAnalytics> {
                 return DataRow(
                   cells: [
                     DataCell(Text(s.name)),
-                    DataCell(Text(s.uid)),
-                    DataCell(Text("${s.course} ${s.yearLevel}")),
-                    DataCell(Text(s.points.toString())),
+                    DataCell(Text(s.gender)),
+                    DataCell(Text(s.college, style: const TextStyle(fontSize: 11))),
+                    DataCell(Text(s.course, style: const TextStyle(fontSize: 11))),
+                    DataCell(Text(s.yearLevel)),
                     DataCell(Text(s.visits.toString())),
                     DataCell(Text(lastCheckIn,
                         style: TextStyle(color: Colors.grey.shade700))),
@@ -2622,69 +3000,13 @@ class _AttendanceAnalyticsState extends State<AttendanceAnalytics> {
     );
   }
 
-  // Analytics card
-  Widget analyticsInfoCard(
-      {required String title, required int value, required IconData icon}) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: jmcIndigo.withOpacity(0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: jmcIndigo.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: jmcIndigo.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: jmcIndigo, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value.toString(),
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: jmcIndigo,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // Helper for consistent 12-hour time formatting
   String _formatTime(DateTime t) {
     final hour12 = t.hour == 0 ? 12 : (t.hour > 12 ? t.hour - 12 : t.hour);
     final ampm = t.hour >= 12 ? 'PM' : 'AM';
     return "${hour12.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')} $ampm";
   }
+
 
   // Generate report
   Future<void> generateReport(List<Student> studentsToExport) async {
@@ -2760,10 +3082,11 @@ class _AttendanceAnalyticsState extends State<AttendanceAnalytics> {
     <thead>
       <tr>
         <th>Student Name</th>
-        <th>Student ID</th>
-        <th>Course</th>
+        <th>Gender</th>
+        <th>College</th>
+        <th>Program/Course</th>
         <th>Year Level</th>
-        <th style="text-align: center;">Total Points</th>
+        <th>Research Year</th>
         <th style="text-align: center;">Total Visits</th>
       </tr>
     </thead>
@@ -2774,10 +3097,11 @@ class _AttendanceAnalyticsState extends State<AttendanceAnalytics> {
       buffer.write('''
       <tr>
         <td><strong>${s.name}</strong></td>
-        <td><code>${s.id}</code></td>
-        <td>${s.course}</td>
+        <td>${s.gender}</td>
+        <td style="font-size: 11px;">${s.college}</td>
+        <td style="font-size: 11px;">${s.course}</td>
         <td>${s.yearLevel}</td>
-        <td style="text-align: center;" class="points">${s.points}</td>
+        <td>${s.researchYear}</td>
         <td style="text-align: center;">${s.visits}</td>
       </tr>
 ''');

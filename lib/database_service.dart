@@ -27,7 +27,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -68,6 +68,17 @@ class DatabaseService {
             });
           }
         }
+
+        if (oldVersion < 5) {
+          // Version 5: Add more fields for reporting
+          try {
+            await db.execute('ALTER TABLE students ADD COLUMN gender TEXT DEFAULT "N/A"');
+            await db.execute('ALTER TABLE students ADD COLUMN college TEXT DEFAULT "N/A"');
+            await db.execute('ALTER TABLE students ADD COLUMN research_year TEXT DEFAULT "N/A"');
+          } catch (e) {
+            print("DatabaseService: Error adding columns in v5: $e");
+          }
+        }
       },
     );
   }
@@ -80,8 +91,11 @@ class DatabaseService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id TEXT UNIQUE,
         name TEXT,
-        course TEXT,
-        year_level TEXT,
+        gender TEXT DEFAULT "N/A",
+        college TEXT DEFAULT "N/A",
+        course TEXT DEFAULT "N/A",
+        year_level TEXT DEFAULT "N/A",
+        research_year TEXT DEFAULT "N/A",
         rfid_uid TEXT UNIQUE,
         points INTEGER DEFAULT 0,
         visits INTEGER DEFAULT 0,
@@ -316,8 +330,11 @@ class DatabaseService {
         uid: map['rfid_uid'],
         id: studentId,
         name: map['name'],
+        gender: map['gender'] ?? "N/A",
+        college: map['college'] ?? "N/A",
         course: map['course'] ?? "N/A",
         yearLevel: map['year_level'] ?? "N/A",
+        researchYear: map['research_year'] ?? "N/A",
         points: map['points'],
         visits: map['visits'],
         isActive: map['is_active'] == 1,
@@ -334,8 +351,11 @@ class DatabaseService {
       {
         'student_id': s.id,
         'name': s.name,
+        'gender': s.gender,
+        'college': s.college,
         'course': s.course,
         'year_level': s.yearLevel,
+        'research_year': s.researchYear,
         'rfid_uid': s.uid,
         'points': s.points,
         'visits': s.visits,
